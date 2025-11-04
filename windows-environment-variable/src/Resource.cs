@@ -17,7 +17,7 @@ namespace OpenDsc.Resource.Windows.EnvironmentVariable;
 [ExitCode(2, Exception = typeof(Exception), Description = "Generic error")]
 [ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
 [ExitCode(4, Exception = typeof(SecurityException), Description = "Access denied")]
-[ExitCode(5, Exception = typeof(ArgumentException), Description = "The environment variable name contains invalid characters.")]
+[ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument")]
 public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
 {
     public override string GetSchema()
@@ -27,9 +27,11 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
             PropertyNameResolver = PropertyNameResolvers.CamelCase
         };
 
-        var builder = new JsonSchemaBuilder().FromType<Schema>(config).Build();
+        var builder = new JsonSchemaBuilder().FromType<Schema>(config);
+        builder.Schema("https://json-schema.org/draft/2020-12/schema");
+        var schema = builder.Build();
 
-        return JsonSerializer.Serialize(builder);
+        return JsonSerializer.Serialize(schema);
     }
 
     public Schema Get(Schema instance)
@@ -48,6 +50,11 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
 
     public SetResult<Schema>? Set(Schema instance)
     {
+        if (instance.Value is null)
+        {
+            throw new ArgumentException("Environment variable value cannot be empty.");
+        }
+
         var target = instance.Scope is Scope.Machine ? EnvironmentVariableTarget.Machine : EnvironmentVariableTarget.User;
         Environment.SetEnvironmentVariable(instance.Name, instance.Value, target);
 
