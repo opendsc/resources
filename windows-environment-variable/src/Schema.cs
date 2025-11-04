@@ -10,6 +10,7 @@ namespace OpenDsc.Resource.Windows.EnvironmentVariable;
 
 [Title("Windows Environment Variable Schema")]
 [Description("Schema for managing Windows environment variables via OpenDsc.")]
+[AdditionalProperties(false)]
 public sealed class Schema
 {
     [Required]
