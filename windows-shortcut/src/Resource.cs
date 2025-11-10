@@ -27,9 +27,11 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
             PropertyNameResolver = PropertyNameResolvers.CamelCase
         };
 
-        var builder = new JsonSchemaBuilder().FromType<Schema>(config).Build();
+        var builder = new JsonSchemaBuilder().FromType<Schema>(config);
+        builder.Schema("https://json-schema.org/draft/2020-12/schema");
+        var schema = builder.Build();
 
-        return JsonSerializer.Serialize(builder);
+        return JsonSerializer.Serialize(schema);
     }
 
     public Schema Get(Schema instance)

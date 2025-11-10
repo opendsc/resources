@@ -10,6 +10,7 @@ namespace OpenDsc.Resource.Windows.Shortcut;
 
 [Title("Windows Shortcut Resource Schema")]
 [Description("Schema for managing Windows shortcuts via OpenDsc.")]
+[AdditionalProperties(false)]
 public sealed class Schema
 {
     internal const string DefaultIconLocation = ",0";
