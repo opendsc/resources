@@ -6,12 +6,14 @@
     <TargetFramework>net9.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublishAot>true</PublishAot>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
     <InvariantGlobalization>true</InvariantGlobalization>
     <AssemblyName>windows-service</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="JsonSchema.Net.Generation" Version="5.1.1" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="9.0.6" />
     <PackageReference Include="OpenDsc.Resource.CommandLine" Version="0.2.0" />
   </ItemGroup>
