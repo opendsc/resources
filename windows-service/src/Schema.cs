@@ -16,11 +16,27 @@ public sealed class Schema
 {
     [Required]
     [Description("The name of the service.")]
+    [MinLength(1)]
+    [MaxLength(256)]
+    [Pattern(@"^[^/\\]+$")]
     public string Name { get; set; } = string.Empty;
 
     [Description("The display name of the service.")]
     [Nullable(false)]
+    [MaxLength(256)]
     public string? DisplayName { get; set; }
+
+    [Description("The description of the service.")]
+    [Nullable(false)]
+    public string? Description { get; set; }
+
+    [Description("The fully qualified path to the service binary file. If the path contains a space, it must be quoted. The path can also include arguments.")]
+    [Nullable(false)]
+    public string? Path { get; set; }
+
+    [Description("The dependencies of the service.")]
+    [Nullable(false)]
+    public string[]? Dependencies { get; set; }
 
     [Description("The status of the service.")]
     [JsonConverter(typeof(JsonStringEnumConverter<ServiceControllerStatus>))]

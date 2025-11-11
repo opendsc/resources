@@ -17,9 +17,14 @@ namespace OpenDsc.Resource.Windows.Service;
 [ExitCode(1, Description = "Invalid parameter")]
 [ExitCode(2, Exception = typeof(Exception), Description = "Generic error")]
 [ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
-[ExitCode(4, Exception = typeof(Win32Exception), Description = "Failed to get services")]
-public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, IExportable<Schema>
+[ExitCode(4, Exception = typeof(Win32Exception), Description = "Windows API error")]
+[ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument or missing required parameter")]
+[ExitCode(6, Exception = typeof(InvalidOperationException), Description = "Invalid operation or service state")]
+[ExitCode(7, Exception = typeof(System.ServiceProcess.TimeoutException), Description = "Service operation timed out")]
+public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
 {
+    private const int ServiceOperationTimeoutSeconds = 30;
+
     public override string GetSchema()
     {
         var config = new SchemaGeneratorConfiguration()
@@ -36,32 +41,176 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
 
     public Schema Get(Schema instance)
     {
-        foreach (var service in Export())
+        try
         {
-            if (string.Equals(service.Name, instance.Name, StringComparison.OrdinalIgnoreCase))
+            using var service = new ServiceController(instance.Name);
+            service.Refresh();
+
+            var dependencies = service.ServicesDependedOn.Select(s => s.ServiceName).ToArray();
+
+            return new Schema()
             {
-                return service;
+                Name = service.ServiceName,
+                DisplayName = service.DisplayName,
+                Description = ServiceHelper.GetServiceDescription(service.ServiceName),
+                Path = ServiceHelper.GetServicePath(service.ServiceName),
+                Dependencies = dependencies.Length > 0 ? dependencies : null,
+                Status = service.Status,
+                StartType = service.StartType
+            };
+        }
+        catch (InvalidOperationException)
+        {
+            return new Schema()
+            {
+                Name = instance.Name,
+                Exist = false
+            };
+        }
+    }
+
+    public SetResult<Schema>? Set(Schema instance)
+    {
+        if (instance.Status is not null)
+        {
+            if (instance.Status != ServiceControllerStatus.Stopped &&
+                instance.Status != ServiceControllerStatus.Running &&
+                instance.Status != ServiceControllerStatus.Paused)
+            {
+                throw new ArgumentException($"Invalid service status '{instance.Status}'. Only Stopped, Running, and Paused are supported.");
             }
         }
 
-        return new Schema()
+        if (instance.StartType is not null)
         {
-            Name = instance.Name,
-            Exist = false
-        };
+            if (instance.StartType != ServiceStartMode.Automatic &&
+                instance.StartType != ServiceStartMode.Manual &&
+                instance.StartType != ServiceStartMode.Disabled)
+            {
+                throw new ArgumentException($"Invalid service start type '{instance.StartType}'. Only Automatic, Manual, and Disabled are supported.");
+            }
+        }
+
+        var serviceExists = false;
+        try
+        {
+            using var testService = new ServiceController(instance.Name);
+            testService.Refresh();
+            serviceExists = true;
+        }
+        catch (InvalidOperationException)
+        {
+            serviceExists = false;
+        }
+
+        if (!serviceExists)
+        {
+            CreateService(instance);
+        }
+
+        using var service = new ServiceController(instance.Name);
+        service.Refresh();
+
+        if (instance.DisplayName is not null && !string.Equals(service.DisplayName, instance.DisplayName, StringComparison.Ordinal))
+        {
+            ServiceHelper.SetServiceDisplayName(service.ServiceName, instance.DisplayName);
+        }
+
+        if (instance.Description is not null)
+        {
+            var currentDesc = ServiceHelper.GetServiceDescription(service.ServiceName);
+            if (!string.Equals(currentDesc, instance.Description, StringComparison.Ordinal))
+            {
+                ServiceHelper.SetServiceDescription(service.ServiceName, instance.Description);
+            }
+        }
+
+        if (instance.StartType is not null && service.StartType != instance.StartType.Value)
+        {
+            ServiceHelper.SetServiceStartMode(service.ServiceName, instance.StartType.Value);
+        }
+
+        if (instance.Status is not null && service.Status != instance.Status.Value)
+        {
+            SetServiceStatus(service, instance.Status.Value);
+        }
+
+        return null;
+    }
+
+    public void Delete(Schema instance)
+    {
+        using var service = new ServiceController(instance.Name);
+        service.Refresh();
+
+        if (service.Status != ServiceControllerStatus.Stopped)
+        {
+            service.Stop();
+            service.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(ServiceOperationTimeoutSeconds));
+        }
+
+        ServiceHelper.DeleteWindowsService(service.ServiceName);
     }
 
     public IEnumerable<Schema> Export()
     {
         foreach (var service in ServiceController.GetServices())
         {
+            var dependencies = service.ServicesDependedOn.Select(s => s.ServiceName).ToArray();
+
             yield return new Schema
             {
                 Name = service.ServiceName,
                 DisplayName = service.DisplayName,
+                Description = ServiceHelper.GetServiceDescription(service.ServiceName),
+                Path = ServiceHelper.GetServicePath(service.ServiceName),
+                Dependencies = dependencies.Length > 0 ? dependencies : null,
                 Status = service.Status,
                 StartType = service.StartType
             };
+        }
+    }
+
+    private static void CreateService(Schema instance)
+    {
+        if (string.IsNullOrEmpty(instance.Path))
+        {
+            throw new ArgumentException("Path is required to create a new service");
+        }
+
+        if (instance.StartType is null)
+        {
+            throw new ArgumentException("StartType is required to create a new service");
+        }
+
+        var dependencies = instance.Dependencies != null && instance.Dependencies.Length > 0
+            ? string.Join("\0", instance.Dependencies) + "\0"
+            : null;
+
+        ServiceHelper.CreateWindowsService(
+            instance.Name,
+            instance.Path,
+            instance.DisplayName,
+            instance.StartType.Value,
+            dependencies);
+    }
+
+    private static void SetServiceStatus(ServiceController service, ServiceControllerStatus targetStatus)
+    {
+        if (targetStatus == ServiceControllerStatus.Running && service.Status != ServiceControllerStatus.Running)
+        {
+            service.Start();
+            service.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(ServiceOperationTimeoutSeconds));
+        }
+        else if (targetStatus == ServiceControllerStatus.Stopped && service.Status != ServiceControllerStatus.Stopped)
+        {
+            service.Stop();
+            service.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(ServiceOperationTimeoutSeconds));
+        }
+        else if (targetStatus == ServiceControllerStatus.Paused && service.Status != ServiceControllerStatus.Paused)
+        {
+            service.Pause();
+            service.WaitForStatus(ServiceControllerStatus.Paused, TimeSpan.FromSeconds(ServiceOperationTimeoutSeconds));
         }
     }
 }
