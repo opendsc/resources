@@ -91,19 +91,7 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
             }
         }
 
-        var serviceExists = false;
-        try
-        {
-            using var testService = new ServiceController(instance.Name);
-            testService.Refresh();
-            serviceExists = true;
-        }
-        catch (InvalidOperationException)
-        {
-            serviceExists = false;
-        }
-
-        if (!serviceExists)
+        if (Get(instance).Exist == false)
         {
             CreateService(instance);
         }
@@ -128,6 +116,20 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
         if (instance.StartType is not null && service.StartType != instance.StartType.Value)
         {
             ServiceHelper.SetServiceStartMode(service.ServiceName, instance.StartType.Value);
+        }
+
+        if (instance.Dependencies is not null)
+        {
+            var currentDependencies = service.ServicesDependedOn.Select(s => s.ServiceName).ToArray();
+            var desiredDependencies = instance.Dependencies;
+
+            bool dependenciesChanged = currentDependencies.Length != desiredDependencies.Length ||
+                                      !currentDependencies.OrderBy(d => d).SequenceEqual(desiredDependencies.OrderBy(d => d));
+
+            if (dependenciesChanged)
+            {
+                ServiceHelper.SetServiceDependencies(service.ServiceName, desiredDependencies.Length > 0 ? desiredDependencies : null);
+            }
         }
 
         if (instance.Status is not null && service.Status != instance.Status.Value)

@@ -282,6 +282,46 @@ internal static partial class ServiceHelper
         }
     }
 
+    public static void SetServiceDependencies(string serviceName, string[]? dependencies)
+    {
+        IntPtr scm = IntPtr.Zero;
+        IntPtr service = IntPtr.Zero;
+
+        try
+        {
+            scm = OpenSCManager(null, null, SC_MANAGER_ALL_ACCESS);
+            if (scm == IntPtr.Zero)
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to open Service Control Manager");
+
+            service = OpenService(scm, serviceName, SERVICE_CHANGE_CONFIG);
+            if (service == IntPtr.Zero)
+                throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to open service '{serviceName}'");
+
+            string? dependenciesString;
+            if (dependencies == null || dependencies.Length == 0)
+            {
+                dependenciesString = "\0";
+            }
+            else
+            {
+                dependenciesString = string.Join("\0", dependencies) + "\0";
+            }
+
+            if (!ChangeServiceConfig(service, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE,
+                null, null, IntPtr.Zero, dependenciesString, null, null, null))
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to set dependencies for service '{serviceName}'");
+            }
+        }
+        finally
+        {
+            if (service != IntPtr.Zero)
+                CloseServiceHandle(service);
+            if (scm != IntPtr.Zero)
+                CloseServiceHandle(scm);
+        }
+    }
+
     public static void CreateWindowsService(string serviceName, string binaryPath, string? displayName = null, ServiceStartMode startMode = ServiceStartMode.Manual, string? dependencies = null)
     {
         IntPtr scm = IntPtr.Zero;
