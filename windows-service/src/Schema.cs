@@ -38,12 +38,12 @@ public sealed class Schema
     [Nullable(false)]
     public string[]? Dependencies { get; set; }
 
-    [Description("The status of the service.")]
+    [Description("The status of the service. Only Stopped, Running, and Paused are supported when setting.")]
     [JsonConverter(typeof(JsonStringEnumConverter<ServiceControllerStatus>))]
     [Nullable(false)]
     public ServiceControllerStatus? Status { get; set; }
 
-    [Description("The start type of the service.")]
+    [Description("The start type of the service. Only Automatic, Manual, and Disabled are supported when setting.")]
     [JsonConverter(typeof(JsonStringEnumConverter<ServiceStartMode>))]
     [Nullable(false)]
     public ServiceStartMode? StartType { get; set; }
