@@ -124,10 +124,6 @@ internal static partial class ServiceHelper
             var desc = Marshal.PtrToStructure<SERVICE_DESCRIPTION>(buffer);
             return desc.lpDescription != IntPtr.Zero ? Marshal.PtrToStringUni(desc.lpDescription) : null;
         }
-        catch
-        {
-            return null;
-        }
         finally
         {
             if (buffer != IntPtr.Zero)
@@ -163,10 +159,6 @@ internal static partial class ServiceHelper
 
             var config = Marshal.PtrToStructure<QUERY_SERVICE_CONFIG>(buffer);
             return config.lpBinaryPathName != IntPtr.Zero ? Marshal.PtrToStringUni(config.lpBinaryPathName) : null;
-        }
-        catch
-        {
-            return null;
         }
         finally
         {
