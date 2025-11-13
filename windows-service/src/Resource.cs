@@ -71,24 +71,21 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
 
     public SetResult<Schema>? Set(Schema instance)
     {
-        if (instance.Status is not null)
+        if (instance.Status is not null &&
+            instance.Status != ServiceControllerStatus.Stopped &&
+            instance.Status != ServiceControllerStatus.Running &&
+            instance.Status != ServiceControllerStatus.Paused)
         {
-            if (instance.Status != ServiceControllerStatus.Stopped &&
-                instance.Status != ServiceControllerStatus.Running &&
-                instance.Status != ServiceControllerStatus.Paused)
-            {
-                throw new ArgumentException($"Invalid service status '{instance.Status}'. Only Stopped, Running, and Paused are supported.");
-            }
+            throw new ArgumentException($"Invalid service status '{instance.Status}'. Only Stopped, Running, and Paused are supported.");
+
         }
 
-        if (instance.StartType is not null)
+        if (instance.StartType is not null &&
+            instance.StartType != ServiceStartMode.Automatic &&
+            instance.StartType != ServiceStartMode.Manual &&
+            instance.StartType != ServiceStartMode.Disabled)
         {
-            if (instance.StartType != ServiceStartMode.Automatic &&
-                instance.StartType != ServiceStartMode.Manual &&
-                instance.StartType != ServiceStartMode.Disabled)
-            {
-                throw new ArgumentException($"Invalid service start type '{instance.StartType}'. Only Automatic, Manual, and Disabled are supported.");
-            }
+            throw new ArgumentException($"Invalid service start type '{instance.StartType}'. Only Automatic, Manual, and Disabled are supported.");
         }
 
         if (Get(instance).Exist == false)
