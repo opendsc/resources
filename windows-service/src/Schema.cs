@@ -15,7 +15,7 @@ namespace OpenDsc.Resource.Windows.Service;
 public sealed class Schema
 {
     [Required]
-    [Description("The name of the service.")]
+    [Description("The name of the service. Case insensitive. Cannot contain forward slash (/) or backslash (\\) characters.")]
     [MinLength(1)]
     [MaxLength(256)]
     [Pattern(@"^[^/\\]+$")]
