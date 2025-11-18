@@ -101,6 +101,8 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
             ServiceHelper.SetServiceDisplayName(service.ServiceName, instance.DisplayName);
         }
 
+        service.Refresh();
+
         if (instance.Description is not null)
         {
             var currentDesc = ServiceHelper.GetServiceDescription(service.ServiceName);
@@ -110,10 +112,14 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
             }
         }
 
+        service.Refresh();
+
         if (instance.StartType is not null && service.StartType != instance.StartType.Value)
         {
             ServiceHelper.SetServiceStartMode(service.ServiceName, instance.StartType.Value);
         }
+
+        service.Refresh();
 
         if (instance.Dependencies is not null)
         {
@@ -121,13 +127,16 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
             var desiredDependencies = instance.Dependencies;
 
             bool dependenciesChanged = currentDependencies.Length != desiredDependencies.Length ||
-                                      !currentDependencies.OrderBy(d => d).SequenceEqual(desiredDependencies.OrderBy(d => d));
+                                      !currentDependencies.OrderBy(d => d, StringComparer.OrdinalIgnoreCase)
+                                          .SequenceEqual(desiredDependencies.OrderBy(d => d, StringComparer.OrdinalIgnoreCase));
 
             if (dependenciesChanged)
             {
                 ServiceHelper.SetServiceDependencies(service.ServiceName, desiredDependencies.Length > 0 ? desiredDependencies : null);
             }
         }
+
+        service.Refresh();
 
         if (instance.Status is not null && service.Status != instance.Status.Value)
         {
