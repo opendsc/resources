@@ -15,19 +15,35 @@ namespace OpenDsc.Resource.Windows.Service;
 public sealed class Schema
 {
     [Required]
-    [Description("The name of the service.")]
+    [Description("The name of the service. Case insensitive. Cannot contain forward slash (/) or backslash (\\) characters.")]
+    [MinLength(1)]
+    [MaxLength(256)]
+    [Pattern(@"^[^/\\]+$")]
     public string Name { get; set; } = string.Empty;
 
     [Description("The display name of the service.")]
     [Nullable(false)]
+    [MaxLength(256)]
     public string? DisplayName { get; set; }
 
-    [Description("The status of the service.")]
+    [Description("The description of the service.")]
+    [Nullable(false)]
+    public string? Description { get; set; }
+
+    [Description("The fully qualified path to the service binary file. If the path contains a space, it must be quoted. The path can also include arguments.")]
+    [Nullable(false)]
+    public string? Path { get; set; }
+
+    [Description("The dependencies of the service.")]
+    [Nullable(false)]
+    public string[]? Dependencies { get; set; }
+
+    [Description("The status of the service. Only Stopped, Running, and Paused are supported when setting.")]
     [JsonConverter(typeof(JsonStringEnumConverter<ServiceControllerStatus>))]
     [Nullable(false)]
     public ServiceControllerStatus? Status { get; set; }
 
-    [Description("The start type of the service.")]
+    [Description("The start type of the service. Only Automatic, Manual, and Disabled are supported when setting.")]
     [JsonConverter(typeof(JsonStringEnumConverter<ServiceStartMode>))]
     [Nullable(false)]
     public ServiceStartMode? StartType { get; set; }

@@ -10,6 +10,7 @@
     <SelfContained>false</SelfContained>
     <InvariantGlobalization>true</InvariantGlobalization>
     <AssemblyName>windows-service</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
