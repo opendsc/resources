@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 using OpenDsc.Resource.CommandLine;
 
-namespace OpenDsc.Resource.Windows.EnvironmentVariable;
+namespace OpenDsc.Resource.Windows.Environment;
 
 [JsonSourceGenerationOptions(WriteIndented = false,
                              PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,

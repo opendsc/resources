@@ -2,7 +2,7 @@
 // You may use, distribute and modify this code under the
 // terms of the MIT license.
 
-namespace OpenDsc.Resource.Windows.EnvironmentVariable;
+namespace OpenDsc.Resource.Windows.Environment;
 
 public enum Scope
 {
