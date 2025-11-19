@@ -20,7 +20,6 @@ public sealed class Schema
     [Description("The full path to the shortcut file.")]
     public string Path { get; set; } = string.Empty;
 
-    [Required]
     [Description("The target full path the shortcut points to.")]
     [Nullable(false)]
     public string? TargetPath { get; set; }

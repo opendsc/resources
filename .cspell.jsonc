@@ -1,9 +1,17 @@
 {
     "words": [
         "advapi",
+        "DATAW",
+        "FILETIME",
+        "LASTEXITCODE",
         "lpdw",
         "netstandard",
         "Nieto",
+        "pidl",
+        "ppidl",
+        "ppsz",
+        "STGM",
+        "SYSLIB",
         "Trimmable"
     ]
 }
