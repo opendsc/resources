@@ -9,7 +9,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <AssemblyName>windows-environment-variable</AssemblyName>
+    <AssemblyName>windows-environment</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

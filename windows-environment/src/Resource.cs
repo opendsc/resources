@@ -9,9 +9,11 @@ using System.Text.Json.Serialization;
 using Json.Schema;
 using Json.Schema.Generation;
 
-namespace OpenDsc.Resource.Windows.EnvironmentVariable;
+namespace OpenDsc.Resource.Windows.Environment;
 
-[DscResource("OpenDsc.Windows/EnvironmentVariable", Description = "Manage Windows environment variables", Tags = ["windows", "environment", "variable"])]
+using Environment = System.Environment;
+
+[DscResource("OpenDsc.Windows/Environment", Description = "Manage Windows environment variables", Tags = ["windows", "environment", "variable"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Description = "Invalid parameter")]
 [ExitCode(2, Exception = typeof(Exception), Description = "Generic error")]

@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 using Json.Schema.Generation;
 
-namespace OpenDsc.Resource.Windows.EnvironmentVariable;
+namespace OpenDsc.Resource.Windows.Environment;
 
 [Title("Windows Environment Variable Schema")]
 [Description("Schema for managing Windows environment variables via OpenDsc.")]
