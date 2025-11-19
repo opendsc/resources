@@ -2,16 +2,21 @@
     "words": [
         "advapi",
         "DATAW",
+        "Dnscache",
         "FILETIME",
         "LASTEXITCODE",
         "lpdw",
         "netstandard",
+        "netsvcs",
         "Nieto",
         "pidl",
         "ppidl",
         "ppsz",
         "STGM",
+        "svchost",
         "SYSLIB",
-        "Trimmable"
+        "Tcpip",
+        "Trimmable",
+        "wuauserv"
     ]
 }
