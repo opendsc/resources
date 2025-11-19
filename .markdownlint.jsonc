@@ -11,7 +11,9 @@
   "fenced-code-language": {
     "allowed_languages": [
       "powershell",
-      "text"
+      "text",
+      "json",
+      "yaml"
     ],
     "language_only": true
   },
@@ -23,7 +25,8 @@
   },
   "line-length": {
     "strict": true,
-    "code_blocks": false
+    "code_blocks": false,
+    "tables": false
   },
   "link-image-style": {
     "collapsed": false,
