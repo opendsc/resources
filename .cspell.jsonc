@@ -1,7 +1,10 @@
 {
     "words": [
         "advapi",
+        "CIFS",
         "DATAW",
+        "DISM",
+        "dismapi",
         "Dnscache",
         "FILETIME",
         "LASTEXITCODE",
@@ -12,6 +15,7 @@
         "pidl",
         "ppidl",
         "ppsz",
+        "Srvs",
         "STGM",
         "svchost",
         "SYSLIB",
