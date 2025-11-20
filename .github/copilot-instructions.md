@@ -61,9 +61,10 @@ public sealed class Schema
 {
     [Required]
     [Pattern(@"regex")]
+    [Nullable(false)]  // Prevents users from submitting null values
     public string Name { get; set; }
 
-    [JsonPropertyName("_exist")]  // Internal properties prefixed with _
+    [JsonPropertyName("_exist")]  // DSC canonical properties prefixed with _
     [Default(true)]
     public bool? Exist { get; set; }
 }
@@ -71,8 +72,70 @@ public sealed class Schema
 
 **Naming Rules:**
 - User-facing properties: camelCase (enforced by `PropertyNameResolver.CamelCase`)
-- Internal/metadata properties: `_exist`, `_scope` (underscore prefix)
+- DSC canonical properties: `_exist`, `_purge`, `_inDesiredState` (underscore prefix)
 - Enums: PascalCase values (e.g., `User`, `Machine`)
+
+**DSC Canonical Properties:**
+
+DSC defines several canonical properties that provide shared semantics across resources. These properties always start with an underscore (`_`) and should not be overridden or extended:
+
+- **`_exist` (bool?)** - Indicates whether the resource instance should exist. Used to enforce create/update/delete operations during `set`. This is the most commonly used canonical property.
+  - Default: `true`
+  - Use in: Resources that manage instance lifecycle
+
+- **`_purge` (bool?)** - Write-only property for list-based resources to indicate whether unmanaged entries should be removed. Useful for resources managing collections where you want to either allow or remove items not explicitly defined.
+  - Use in: Resources managing lists/collections (e.g., group members, installed features)
+
+- **`_inDesiredState` (bool?)** - Read-only property indicating whether the instance is in desired state. Mandatory for resources that implement the `test` operation.
+  - Use in: Resources implementing `ITestable<Schema>`
+
+**Nullability Guidelines:**
+- Use `[Nullable(false)]` on properties where it doesn't make sense for users to submit `null` values (e.g., required strings, key properties)
+- DSC canonical properties like `_exist` should use nullable types (e.g., `bool?`) for their C# type
+- The `[Nullable]` attribute controls JSON deserialization behavior, while the `?` on the type controls C# nullability
+
+**Resource Metadata (`_metadata`):**
+
+Resources can return metadata in their results by including a `_metadata` property. The most important metadata property is `_restartRequired`, which indicates what needs to be restarted after a set operation:
+
+```csharp
+// Example: Returning restart metadata in Set() or Get()
+return new SetResult<Schema>
+{
+    BeforeState = beforeState,
+    AfterState = afterState,
+    Metadata = new Dictionary<string, object>
+    {
+        ["_restartRequired"] = new[]
+        {
+            new { system = Environment.MachineName },      // System restart
+            new { service = "serviceName" },               // Service restart
+            new { process = new { name = "app", id = 1234 } }  // Process restart
+        }
+    }
+};
+```
+
+**Restart Types:**
+- **System restart**: `{ "system": "computerName" }` - indicates the computer needs to restart
+- **Service restart**: `{ "service": "serviceName" }` - indicates a specific service needs to restart
+- **Process restart**: `{ "process": { "name": "processName", "id": 1234 } }` - indicates a specific process needs to restart
+
+**Example JSON payload** that a resource would return with restart metadata:
+
+```json
+{
+  "name": "MyFeature",
+  "state": "Present",
+  "_metadata": {
+    "_restartRequired": [
+      { "system": "SERVER01" }
+    ]
+  }
+}
+```
+
+DSC automatically aggregates `_restartRequired` entries from all resources into the top-level `Microsoft.DSC` metadata in the configuration result.
 
 ## Build & Test Workflow
 
@@ -220,19 +283,35 @@ Machine scope requires admin elevation.
 
 Use `windows-environment` as the template - it's the simplest, most complete example.
 
-1. **Create directory structure:**
+1. **Create directory structure using dotnet template:**
+   ```powershell
+   # Install the dsc-aot template (if not already installed)
+   dotnet new install dsc-aot
+
+   # Create new resource from template
+   dotnet new dsc-aot -n windows-<name> -o windows-<name>
+   ```
+
+   This creates:
    ```
    windows-<name>/
    ├── src/
-   └── tests/
+   │   ├── Program.cs
+   │   ├── Resource.cs
+   │   ├── Schema.cs
+   │   ├── SourceGenerationContext.cs
+   │   └── *.csproj
+   ├── tests/
+   │   └── *.Tests.ps1
+   └── build.ps1
    ```
 
-2. **Required source files** (copy from `windows-environment` and adapt):
-   - `Program.cs` - Entry point (minimal changes needed)
+2. **Customize generated files:**
+   - `Program.cs` - Update resource name and namespace (minimal changes needed)
    - `Resource.cs` - Core implementation with `[DscResource]` attribute
-   - `Schema.cs` - Property definitions with JSON Schema attributes
-   - `SourceGenerationContext.cs` - JSON serialization (update type references)
-   - `*.csproj` - Project file (update `AssemblyName`, add platform-specific packages)
+   - `Schema.cs` - Property definitions with JSON Schema attributes and `[Nullable(false)]` on non-nullable properties
+   - `SourceGenerationContext.cs` - Update type references for your schema
+   - `*.csproj` - Update `AssemblyName`, add platform-specific packages if needed
 
 3. **Implement Resource class:**
    - Inherit from `AotDscResource<Schema>` with context parameter
@@ -247,7 +326,8 @@ Use `windows-environment` as the template - it's the simplest, most complete exa
 4. **Define Schema:**
    - Add `[Title]`, `[Description]`, `[AdditionalProperties(false)]`
    - Required key property with `[Required]` and `[Pattern]` validation
-   - Use `[JsonPropertyName("_propertyName")]` for internal properties
+   - Use `[Nullable(false)]` on properties where users should not submit `null` values
+   - Use `[JsonPropertyName("_propertyName")]` for DSC canonical properties
    - Add `[Default]` values where appropriate
    - All enums use PascalCase values
 
