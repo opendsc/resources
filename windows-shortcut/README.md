@@ -22,15 +22,19 @@ The resource works perfectly in standard .NET runtime with JIT compilation.
 
 ## Schema
 
-- `path` (required): Full path to the shortcut file (.lnk)
-- `targetPath`: Full path to the target executable or file
-- `arguments`: Command-line arguments to pass to the target
-- `workingDirectory`: Working directory for the target
-- `description`: Description/comment for the shortcut
-- `iconLocation`: Icon path and index (format: "path,index")
-- `hotkey`: Hotkey combination (format: "MODIFIER+KEY", e.g., "CTRL+ALT+F")
-- `windowStyle`: Window state when launched (Normal, Minimized, Maximized)
-- `_exist`: Whether the shortcut should exist (default: true)
+### Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `path` | string | Yes | Full path to the shortcut file (.lnk). |
+| `targetPath` | string | No | Full path to the target executable or file. |
+| `arguments` | string | No | Command-line arguments to pass to the target. |
+| `workingDirectory` | string | No | Working directory for the target. |
+| `description` | string | No | Description/comment for the shortcut. |
+| `iconLocation` | string | No | Icon path and index (format: "path,index"). |
+| `hotkey` | string | No | Hotkey combination (format: "MODIFIER+KEY", e.g., "CTRL+ALT+F"). |
+| `windowStyle` | enum | No | Window state when launched. Valid values: `Normal`, `Minimized`, `Maximized`. |
+| `_exist` | boolean | No | Whether the shortcut should exist. Default: `true`. |
 
 ## Examples
 
