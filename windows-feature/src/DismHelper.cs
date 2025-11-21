@@ -42,31 +42,22 @@ internal static class DismHelper
                     (errorMessage != null ? $" - {errorMessage}" : string.Empty));
             }
 
-            // Manually read structure fields to avoid marshalling issues
-            var offset = 0;
-            var featureNamePtr = Marshal.ReadIntPtr(featureInfoPtr, offset);
-            offset += IntPtr.Size;
-            var state = (DismPackageFeatureState)Marshal.ReadInt32(featureInfoPtr, offset);
-            offset += sizeof(int);
-            var displayNamePtr = Marshal.ReadIntPtr(featureInfoPtr, offset);
-            offset += IntPtr.Size;
-            var descriptionPtr = Marshal.ReadIntPtr(featureInfoPtr, offset);
-            offset += IntPtr.Size;
-            var restartRequired = (DismRestartType)Marshal.ReadInt32(featureInfoPtr, offset);
+            // Marshal the structure
+            var featureInfo = Marshal.PtrToStructure<DismFeatureInfo>(featureInfoPtr);
 
-            var isInstalled = state == DismPackageFeatureState.Installed ||
-                            state == DismPackageFeatureState.InstallPending;
+            var isInstalled = featureInfo.State == DismPackageFeatureState.Installed ||
+                            featureInfo.State == DismPackageFeatureState.InstallPending;
 
             return (new Schema
             {
-                Name = featureNamePtr != IntPtr.Zero ? Marshal.PtrToStringUni(featureNamePtr) ?? string.Empty : string.Empty,
+                Name = featureInfo.FeatureName ?? string.Empty,
                 Exist = isInstalled ? null : false,
-                DisplayName = displayNamePtr != IntPtr.Zero ? Marshal.PtrToStringUni(displayNamePtr) : null,
-                Description = descriptionPtr != IntPtr.Zero ? Marshal.PtrToStringUni(descriptionPtr) : null,
-                State = state,
+                DisplayName = featureInfo.DisplayName,
+                Description = featureInfo.Description,
+                State = featureInfo.State,
                 IncludeAllSubFeatures = includeAllSubFeatures,
                 Source = source
-            }, restartRequired);
+            }, featureInfo.RestartRequired);
         }
         finally
         {
@@ -184,9 +175,7 @@ internal static class DismHelper
                     (errorMessage != null ? $" - {errorMessage}" : string.Empty));
             }
 
-            // DISM returns an array of DismFeature structures (not pointers)
-            // Each structure: PCWSTR (8 bytes on x64) + DismPackageFeatureState (4 bytes int)
-            // The struct has alignment, so actual size may be larger
+            // DISM returns an array of DismFeature structures
             var structSize = Marshal.SizeOf<DismFeature>();
 
             for (var i = 0; i < count; i++)
@@ -194,36 +183,19 @@ internal static class DismHelper
                 // Calculate pointer to current structure in array
                 var currentFeaturePtr = IntPtr.Add(featuresPtr, i * structSize);
 
-                // Read fields directly with known offsets
-                IntPtr featureNamePtr;
-                DismPackageFeatureState state;
-
-                try
-                {
-                    featureNamePtr = Marshal.ReadIntPtr(currentFeaturePtr, 0);
-                    state = (DismPackageFeatureState)Marshal.ReadInt32(currentFeaturePtr, IntPtr.Size);
-                }
-                catch (AccessViolationException ex)
-                {
-                    // Log error and skip this feature
-                    Console.Error.WriteLine($"Error reading feature at index {i}: {ex.Message}");
-                    continue;
-                }
+                // Marshal the structure
+                var feature = Marshal.PtrToStructure<DismFeature>(currentFeaturePtr);
 
                 // Only export installed features
-                if (state == DismPackageFeatureState.Installed ||
-                    state == DismPackageFeatureState.InstallPending)
+                if (feature.State == DismPackageFeatureState.Installed ||
+                    feature.State == DismPackageFeatureState.InstallPending)
                 {
-                    var featureName = featureNamePtr != IntPtr.Zero
-                        ? Marshal.PtrToStringUni(featureNamePtr)
-                        : null;
-
-                    if (featureName != null)
+                    if (!string.IsNullOrEmpty(feature.FeatureName))
                     {
                         yield return new Schema
                         {
-                            Name = featureName,
-                            State = state
+                            Name = feature.FeatureName,
+                            State = feature.State
                         };
                     }
                 }

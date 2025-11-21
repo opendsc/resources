@@ -150,20 +150,20 @@ public enum DismPackageFeatureState
     PartiallyInstalled = 7
 }
 
-[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 4)]
 internal struct DismFeature
 {
-    public IntPtr FeatureName;
+    public string FeatureName;
     public DismPackageFeatureState State;
 }
 
-[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 4)]
 internal struct DismFeatureInfo
 {
-    public IntPtr FeatureName;
+    public string FeatureName;
     public DismPackageFeatureState State;
-    public IntPtr DisplayName;
-    public IntPtr Description;
+    public string DisplayName;
+    public string Description;
     public DismRestartType RestartRequired;
     public IntPtr CustomProperty;
     public uint CustomPropertyCount;
