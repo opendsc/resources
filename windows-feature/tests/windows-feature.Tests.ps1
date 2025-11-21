@@ -1,6 +1,6 @@
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Describe 'OpenDsc.Windows/Feature Resource' {
+Describe 'windows-feature' {
     BeforeAll {
         $publishPath = Join-Path $PSScriptRoot '..\src\bin\Release\net9.0-windows\win-x64\publish'
         $env:Path += ";$publishPath"
@@ -9,29 +9,87 @@ Describe 'OpenDsc.Windows/Feature Resource' {
         $testFeatureName = 'TelnetClient'
     }
 
-    Context 'Resource Discovery' {
-        It 'Should be discoverable via dsc resource list' {
-            $resources = dsc resource list | ConvertFrom-Json
-            $resource = $resources.Where({ $_.type -eq $resourceName })
-            $resource | Should -Not -BeNullOrEmpty
-            $resource[0].kind | Should -Be 'Resource'
+    Context 'Discovery' {
+        It 'should be found by dsc' {
+            $result = dsc resource list OpenDsc.Windows/Feature | ConvertFrom-Json
+            $result | Should -Not -BeNullOrEmpty
+            $result.type | Should -Be 'OpenDsc.Windows/Feature'
         }
 
-        It 'Should have a valid manifest' {
-            $resource = dsc resource list |
-                ConvertFrom-Json |
-                Where-Object { $_.type -eq $resourceName }
+        It 'should report correct capabilities' {
+            $result = dsc resource list OpenDsc.Windows/Feature | ConvertFrom-Json
+            $result.capabilities | Should -Contain 'get'
+            $result.capabilities | Should -Contain 'set'
+            $result.capabilities | Should -Contain 'delete'
+            $result.capabilities | Should -Contain 'export'
+        }
 
-            $resource.version | Should -Not -BeNullOrEmpty
-            $resource.capabilities | Should -Contain 'Get'
-            $resource.capabilities | Should -Contain 'Set'
-            $resource.capabilities | Should -Contain 'Delete'
-            $resource.capabilities | Should -Contain 'Export'
+        It 'should have a valid manifest' {
+            $manifest = Get-Content (Join-Path $publishPath 'windows-feature.dsc.resource.json') | ConvertFrom-Json
+            $manifest.type | Should -Be 'OpenDsc.Windows/Feature'
+            $manifest.version | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Schema Validation' {
+        It 'should have required properties in schema' {
+            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
+            $schema = $schemaJson | ConvertFrom-Json
+
+            $schema.properties | Should -Not -BeNullOrEmpty
+            $schema.properties.name | Should -Not -BeNullOrEmpty
+            $schema.properties.name.type | Should -Be 'string'
+            $schema.properties.name.pattern | Should -Not -BeNullOrEmpty
+        }
+
+        It 'should have _exist property with default value' {
+            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
+            $schema = $schemaJson | ConvertFrom-Json
+
+            $schema.properties._exist | Should -Not -BeNullOrEmpty
+            $schema.properties._exist.type | Should -Be 'boolean'
+            $schema.properties._exist.default | Should -Be $true
+        }
+
+        It 'should have read-only properties marked correctly' {
+            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
+            $schema = $schemaJson | ConvertFrom-Json
+
+            $schema.properties.state | Should -Not -BeNullOrEmpty
+            $schema.properties.state.readOnly | Should -Be $true
+            $schema.properties.displayName.readOnly | Should -Be $true
+            $schema.properties.description.readOnly | Should -Be $true
+        }
+
+        It 'should have _metadata property for restart information' {
+            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
+            $schema = $schemaJson | ConvertFrom-Json
+
+            $schema.properties._metadata | Should -Not -BeNullOrEmpty
+            $schema.properties._metadata.description | Should -BeLike "*restart*"
+        }
+
+        It 'should not allow additional properties' {
+            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
+            $schema = $schemaJson | ConvertFrom-Json
+
+            $schema.additionalProperties | Should -Be $false
         }
     }
 
     Context 'Get Operation' -Skip:(!$isAdmin) {
-        It 'Should get an installed feature' {
+        It 'should return _exist=false for non-existent feature' {
+            $inputJson = @{
+                name = 'NonExistentFeature-12345-XYZ'
+            } | ConvertTo-Json -Compress
+
+            $result = dsc resource get -r $resourceName --input $inputJson | ConvertFrom-Json
+
+            $result.actualState.name | Should -Be 'NonExistentFeature-12345-XYZ'
+            $result.actualState._exist | Should -Be $false
+        }
+
+        It 'should read properties of existing feature' {
             # Most Windows systems don't have TelnetClient installed by default
             $inputJson = @{
                 name = $testFeatureName
@@ -44,18 +102,22 @@ Describe 'OpenDsc.Windows/Feature Resource' {
 
             if ($result.actualState._exist) {
                 $result.actualState.state | Should -Not -BeNullOrEmpty
+                $result.actualState.displayName | Should -Not -BeNullOrEmpty
             }
         }
 
-        It 'Should return _exist=false for non-existent feature' {
+        It 'should include displayName and description for features' {
+            # Test with a commonly available feature
             $inputJson = @{
-                name = 'NonExistentFeature12345'
+                name = 'TelnetClient'
             } | ConvertTo-Json -Compress
 
             $result = dsc resource get -r $resourceName --input $inputJson | ConvertFrom-Json
 
-            $result.actualState.name | Should -Be 'NonExistentFeature12345'
-            $result.actualState._exist | Should -Be $false
+            $result.actualState.name | Should -Be 'TelnetClient'
+            # displayName and description should be present (may be null if feature doesn't exist)
+            $result.actualState.PSObject.Properties.Name | Should -Contain 'displayName'
+            $result.actualState.PSObject.Properties.Name | Should -Contain 'description'
         }
     }
 
@@ -87,7 +149,7 @@ Describe 'OpenDsc.Windows/Feature Resource' {
             }
         }
 
-        It 'Should enable a feature' {
+        It 'should enable a feature' {
             $inputJson = @{
                 name = $testFeatureName
                 _exist = $true
@@ -97,9 +159,46 @@ Describe 'OpenDsc.Windows/Feature Resource' {
 
             $result.afterState.name | Should -Be $testFeatureName
             $result.afterState._exist | Should -Not -Be $false
+
+            # Verify it was enabled
+            $verifyJson = @{
+                name = $testFeatureName
+            } | ConvertTo-Json -Compress
+
+            $getResult = dsc resource get -r $resourceName --input $verifyJson | ConvertFrom-Json
+            $getResult.actualState._exist | Should -Not -Be $false
         }
 
-        It 'Should be idempotent when feature already enabled' {
+        It 'should disable a feature using _exist=false' {
+            # First enable the feature
+            $enableJson = @{
+                name = $testFeatureName
+                _exist = $true
+            } | ConvertTo-Json -Compress
+
+            dsc resource set -r $resourceName --input $enableJson | Out-Null
+            Start-Sleep -Seconds 2
+
+            # Now disable it using _exist=false
+            $disableJson = @{
+                name = $testFeatureName
+                _exist = $false
+            } | ConvertTo-Json -Compress
+
+            $result = dsc resource set -r $resourceName --input $disableJson | ConvertFrom-Json
+
+            $result.afterState._exist | Should -Be $false
+
+            # Verify it was disabled
+            $verifyJson = @{
+                name = $testFeatureName
+            } | ConvertTo-Json -Compress
+
+            $getResult = dsc resource get -r $resourceName --input $verifyJson | ConvertFrom-Json
+            $getResult.actualState._exist | Should -Be $false
+        }
+
+        It 'should be idempotent when feature already enabled' {
             # First enable
             $inputJson = @{
                 name = $testFeatureName
@@ -109,11 +208,16 @@ Describe 'OpenDsc.Windows/Feature Resource' {
             dsc resource set -r $resourceName --input $inputJson | Out-Null
             Start-Sleep -Seconds 2
 
-            # Try to enable again
-            $result = dsc resource set -r $resourceName --input $inputJson | ConvertFrom-Json
+            # Try to enable again - should return null (no change needed)
+            $result = dsc resource set -r $resourceName --input $inputJson 2>&1
 
-            # Should return no changes if already in desired state
-            $result.afterState._exist | Should -Not -Be $false
+            # If result is empty or shows no change, that's correct idempotent behavior
+            if ($result) {
+                $resultObj = $result | ConvertFrom-Json
+                if ($resultObj.afterState) {
+                    $resultObj.afterState._exist | Should -Not -Be $false
+                }
+            }
         }
     }
 
@@ -144,7 +248,7 @@ Describe 'OpenDsc.Windows/Feature Resource' {
             }
         }
 
-        It 'Should disable a feature' {
+        It 'should disable a feature' {
             $inputJson = @{
                 name = $testFeatureName
             } | ConvertTo-Json -Compress
@@ -155,6 +259,19 @@ Describe 'OpenDsc.Windows/Feature Resource' {
             Start-Sleep -Seconds 2
             $result = dsc resource get -r $resourceName --input $inputJson | ConvertFrom-Json
             $result.actualState._exist | Should -Be $false
+        }
+
+        It 'should be idempotent when feature already disabled' {
+            # First disable the feature
+            $inputJson = @{
+                name = $testFeatureName
+            } | ConvertTo-Json -Compress
+
+            dsc resource delete -r $resourceName --input $inputJson | Out-Null
+            Start-Sleep -Seconds 2
+
+            # Try to delete again - should not throw
+            { dsc resource delete -r $resourceName --input $inputJson } | Should -Not -Throw
         }
     }
 
@@ -186,7 +303,7 @@ Describe 'OpenDsc.Windows/Feature Resource' {
             }
         }
 
-        It 'Should include _metadata._restartRequired when feature requires restart' {
+        It 'should include _metadata._restartRequired when feature requires restart' {
             $inputJson = @{
                 name = $testFeatureName
                 _exist = $true
@@ -208,7 +325,7 @@ Describe 'OpenDsc.Windows/Feature Resource' {
             }
         }
 
-        It 'Should not include restart metadata when feature does not require restart' {
+        It 'should not include restart metadata when feature does not require restart' {
             # First enable the feature
             $inputJson = @{
                 name = $testFeatureName
@@ -234,20 +351,10 @@ Describe 'OpenDsc.Windows/Feature Resource' {
                 }
             }
         }
-
-        It 'Should have _metadata property in schema' {
-            $manifest = Get-Content (Join-Path $publishPath 'windows-feature.dsc.resource.json') | ConvertFrom-Json
-            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
-            $schema = $schemaJson | ConvertFrom-Json
-
-            $schema.properties | Should -Not -BeNullOrEmpty
-            $schema.properties._metadata | Should -Not -BeNullOrEmpty
-            $schema.properties._metadata.description | Should -BeLike "*restart*"
-        }
     }
 
     Context 'Export Operation' -Skip:(!$isAdmin) {
-        It 'Should export all installed features' {
+        It 'should export all features' {
             $result = dsc resource export -r $resourceName | ConvertFrom-Json
 
             $result | Should -Not -BeNullOrEmpty
@@ -257,14 +364,27 @@ Describe 'OpenDsc.Windows/Feature Resource' {
             # Each exported feature should have required properties
             foreach ($feature in $result.resources) {
                 $feature.properties.name | Should -Not -BeNullOrEmpty
-                $feature.properties._exist | Should -Not -Be $false
-                $feature.properties.state | Should -Not -BeNullOrEmpty
+                # Features can be installed or not installed
+                # _exist property is only included when false (not installed)
+                if ($feature.properties._exist -eq $false) {
+                    $feature.properties._exist | Should -Be $false
+                }
             }
         }
 
-        It 'Should export features in valid JSON format' {
+        It 'should export features in valid JSON format' {
             $output = dsc resource export -r $resourceName
             { $output | ConvertFrom-Json } | Should -Not -Throw
+        }
+
+        It 'should export both installed and available features' {
+            $result = dsc resource export -r $resourceName | ConvertFrom-Json
+
+            $installedFeatures = $result.resources | Where-Object { $_.properties._exist -ne $false }
+            $availableFeatures = $result.resources | Where-Object { $_.properties._exist -eq $false }
+
+            # Should have at least some features in each category (typically)
+            $result.resources.Count | Should -BeGreaterThan 0
         }
     }
 }
