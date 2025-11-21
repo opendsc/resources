@@ -186,18 +186,16 @@ internal static class DismHelper
                 // Marshal the structure
                 var feature = Marshal.PtrToStructure<DismFeature>(currentFeaturePtr);
 
-                // Only export installed features
-                if (feature.State == DismPackageFeatureState.Installed ||
-                    feature.State == DismPackageFeatureState.InstallPending)
+                if (!string.IsNullOrEmpty(feature.FeatureName))
                 {
-                    if (!string.IsNullOrEmpty(feature.FeatureName))
+                    var isInstalled = feature.State == DismPackageFeatureState.Installed ||
+                                    feature.State == DismPackageFeatureState.InstallPending;
+
+                    yield return new Schema
                     {
-                        yield return new Schema
-                        {
-                            Name = feature.FeatureName,
-                            State = feature.State
-                        };
-                    }
+                        Name = feature.FeatureName,
+                        Exist = isInstalled ? null : false
+                    };
                 }
             }
         }
