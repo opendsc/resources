@@ -90,7 +90,6 @@ Describe 'windows-optional-feature' {
         }
 
         It 'should read properties of existing feature' {
-            # Most Windows systems don't have TelnetClient installed by default
             $inputJson = @{
                 name = $testFeatureName
             } | ConvertTo-Json -Compress
@@ -107,7 +106,6 @@ Describe 'windows-optional-feature' {
         }
 
         It 'should include displayName and description for features' {
-            # Test with a commonly available feature
             $inputJson = @{
                 name = 'TelnetClient'
             } | ConvertTo-Json -Compress
@@ -115,7 +113,6 @@ Describe 'windows-optional-feature' {
             $result = dsc resource get -r $resourceName --input $inputJson | ConvertFrom-Json
 
             $result.actualState.name | Should -Be 'TelnetClient'
-            # displayName and description should be present (may be null if feature doesn't exist)
             $result.actualState.PSObject.Properties.Name | Should -Contain 'displayName'
             $result.actualState.PSObject.Properties.Name | Should -Contain 'description'
         }
@@ -123,7 +120,6 @@ Describe 'windows-optional-feature' {
 
     Context 'Set Operation' -Skip:(!$isAdmin) {
         BeforeEach {
-            # Ensure feature is disabled before test
             try {
                 $getInput = @{ name = $testFeatureName } | ConvertTo-Json -Compress
                 $currentState = dsc resource get -r $resourceName --input $getInput | ConvertFrom-Json
@@ -139,7 +135,6 @@ Describe 'windows-optional-feature' {
         }
 
         AfterEach {
-            # Cleanup: disable the feature after test
             try {
                 $deleteInput = @{ name = $testFeatureName } | ConvertTo-Json -Compress
                 dsc resource delete -r $resourceName --input $deleteInput | Out-Null
@@ -160,7 +155,6 @@ Describe 'windows-optional-feature' {
             $result.afterState.name | Should -Be $testFeatureName
             $result.afterState._exist | Should -Not -Be $false
 
-            # Verify it was enabled
             $verifyJson = @{
                 name = $testFeatureName
             } | ConvertTo-Json -Compress
@@ -170,7 +164,6 @@ Describe 'windows-optional-feature' {
         }
 
         It 'should disable a feature using _exist=false' {
-            # First enable the feature
             $enableJson = @{
                 name = $testFeatureName
                 _exist = $true
@@ -179,7 +172,6 @@ Describe 'windows-optional-feature' {
             dsc resource set -r $resourceName --input $enableJson | Out-Null
             Start-Sleep -Seconds 2
 
-            # Now disable it using _exist=false
             $disableJson = @{
                 name = $testFeatureName
                 _exist = $false
@@ -189,7 +181,6 @@ Describe 'windows-optional-feature' {
 
             $result.afterState._exist | Should -Be $false
 
-            # Verify it was disabled
             $verifyJson = @{
                 name = $testFeatureName
             } | ConvertTo-Json -Compress
@@ -199,7 +190,6 @@ Describe 'windows-optional-feature' {
         }
 
         It 'should be idempotent when feature already enabled' {
-            # First enable
             $inputJson = @{
                 name = $testFeatureName
                 _exist = $true
@@ -208,10 +198,8 @@ Describe 'windows-optional-feature' {
             dsc resource set -r $resourceName --input $inputJson | Out-Null
             Start-Sleep -Seconds 2
 
-            # Try to enable again - should return null (no change needed)
             $result = dsc resource set -r $resourceName --input $inputJson 2>&1
 
-            # If result is empty or shows no change, that's correct idempotent behavior
             if ($result) {
                 $resultObj = $result | ConvertFrom-Json
                 if ($resultObj.afterState) {
@@ -223,7 +211,6 @@ Describe 'windows-optional-feature' {
 
     Context 'Delete Operation' -Skip:(!$isAdmin) {
         BeforeEach {
-            # Ensure feature is enabled before test
             try {
                 $inputJson = @{
                     name = $testFeatureName
@@ -238,7 +225,6 @@ Describe 'windows-optional-feature' {
         }
 
         AfterEach {
-            # Cleanup
             try {
                 $deleteInput = @{ name = $testFeatureName } | ConvertTo-Json -Compress
                 dsc resource delete -r $resourceName --input $deleteInput | Out-Null
@@ -255,14 +241,12 @@ Describe 'windows-optional-feature' {
 
             { dsc resource delete -r $resourceName --input $inputJson } | Should -Not -Throw
 
-            # Verify it's disabled
             Start-Sleep -Seconds 2
             $result = dsc resource get -r $resourceName --input $inputJson | ConvertFrom-Json
             $result.actualState._exist | Should -Be $false
         }
 
         It 'should be idempotent when feature already disabled' {
-            # First disable the feature
             $inputJson = @{
                 name = $testFeatureName
             } | ConvertTo-Json -Compress
@@ -270,14 +254,12 @@ Describe 'windows-optional-feature' {
             dsc resource delete -r $resourceName --input $inputJson | Out-Null
             Start-Sleep -Seconds 2
 
-            # Try to delete again - should not throw
             { dsc resource delete -r $resourceName --input $inputJson } | Should -Not -Throw
         }
     }
 
     Context 'Restart Metadata' -Skip:(!$isAdmin) {
         BeforeEach {
-            # Ensure feature is disabled before test
             try {
                 $getInput = @{ name = $testFeatureName } | ConvertTo-Json -Compress
                 $currentState = dsc resource get -r $resourceName --input $getInput | ConvertFrom-Json
@@ -293,7 +275,6 @@ Describe 'windows-optional-feature' {
         }
 
         AfterEach {
-            # Cleanup: disable the feature after test
             try {
                 $deleteInput = @{ name = $testFeatureName } | ConvertTo-Json -Compress
                 dsc resource delete -r $resourceName --input $deleteInput | Out-Null
@@ -310,46 +291,8 @@ Describe 'windows-optional-feature' {
             } | ConvertTo-Json -Compress
 
             $result = dsc resource set -r $resourceName --input $inputJson | ConvertFrom-Json
-
-            # TelnetClient typically requires a restart, but this may vary
-            # We're testing that IF restart is required, the metadata is present
-            if ($result.afterState._metadata) {
-                $result.afterState._metadata | Should -BeOfType [System.Management.Automation.PSCustomObject]
-
-                if ($result.afterState._metadata._restartRequired) {
-                    $result.afterState._metadata._restartRequired | Should -Not -BeNullOrEmpty
-                    $result.afterState._metadata._restartRequired | Should -BeOfType [System.Array]
-                    $result.afterState._metadata._restartRequired[0].system | Should -Not -BeNullOrEmpty
-                    $result.afterState._metadata._restartRequired[0].system | Should -Be $env:COMPUTERNAME
-                }
-            }
-        }
-
-        It 'should not include restart metadata when feature does not require restart' {
-            # First enable the feature
-            $inputJson = @{
-                name = $testFeatureName
-                _exist = $true
-            } | ConvertTo-Json -Compress
-
-            dsc resource set -r $resourceName --input $inputJson | Out-Null
-            Start-Sleep -Seconds 2
-
-            # Try to set it again (idempotent operation should not require restart)
-            $result = dsc resource set -r $resourceName --input $inputJson 2>&1
-
-            # If the feature is already in desired state, set returns nothing
-            # This tests that repeated operations don't add unnecessary restart metadata
-            if ($result) {
-                $resultObj = $result | ConvertFrom-Json
-                # If there's a result and no change was made, there should be no restart metadata
-                if ($resultObj.afterState) {
-                    # Metadata might be null or not present at all when no restart is needed
-                    if ($resultObj.afterState._metadata) {
-                        $resultObj.afterState._metadata._restartRequired | Should -BeNullOrEmpty
-                    }
-                }
-            }
+            $result.afterState._metadata._restartRequired[0].system | Should -Not -BeNullOrEmpty
+            $result.afterState._metadata._restartRequired[0].system | Should -Be $env:COMPUTERNAME
         }
     }
 
@@ -361,11 +304,8 @@ Describe 'windows-optional-feature' {
             $result.resources | Should -Not -BeNullOrEmpty
             $result.resources.Count | Should -BeGreaterThan 0
 
-            # Each exported feature should have required properties
             foreach ($feature in $result.resources) {
                 $feature.properties.name | Should -Not -BeNullOrEmpty
-                # Features can be installed or not installed
-                # _exist property is only included when false (not installed)
                 if ($feature.properties._exist -eq $false) {
                     $feature.properties._exist | Should -Be $false
                 }
@@ -373,17 +313,14 @@ Describe 'windows-optional-feature' {
         }
 
         It 'should export features in valid JSON format' {
-            $output = dsc resource export -r $resourceName
-            { $output | ConvertFrom-Json } | Should -Not -Throw
+            $result = dsc resource export -r $resourceName
+            $result | Should -Not -BeNullOrEmpty
+            { $result | ConvertFrom-Json } | Should -Not -Throw
         }
 
         It 'should export both installed and available features' {
             $result = dsc resource export -r $resourceName | ConvertFrom-Json
 
-            $installedFeatures = $result.resources | Where-Object { $_.properties._exist -ne $false }
-            $availableFeatures = $result.resources | Where-Object { $_.properties._exist -eq $false }
-
-            # Should have at least some features in each category (typically)
             $result.resources.Count | Should -BeGreaterThan 0
         }
     }

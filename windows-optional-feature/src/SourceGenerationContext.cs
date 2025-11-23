@@ -16,6 +16,8 @@ namespace OpenDsc.Resource.Windows.OptionalFeature;
 [JsonSerializable(typeof(IDscResource<Schema>))]
 [JsonSerializable(typeof(Schema))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
+[JsonSerializable(typeof(RestartRequired))]
+[JsonSerializable(typeof(RestartRequired[]))]
 internal partial class SourceGenerationContext : JsonSerializerContext
 {
 }

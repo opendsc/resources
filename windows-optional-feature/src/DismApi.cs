@@ -78,7 +78,7 @@ internal static partial class DismApi
     public static void Initialize()
     {
         var hr = DismInitialize(DismLogLevel.LogErrors, null, null);
-        if (hr != 0 && hr != unchecked((int)0x00000001)) // Allow ERROR_INVALID_FUNCTION if already initialized
+        if (hr != 0 && hr != unchecked((int)0x00000001))
         {
             throw new InvalidOperationException($"Failed to initialize DISM API: 0x{hr:X8}");
         }

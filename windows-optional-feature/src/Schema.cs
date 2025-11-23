@@ -8,14 +8,13 @@ using Json.Schema.Generation;
 namespace OpenDsc.Resource.Windows.OptionalFeature;
 
 [Title("Windows Feature")]
-[Description("Manages Windows optional features using the DISM API.")]
+[Description("Manages Windows optional features.")]
 [AdditionalProperties(false)]
 public sealed class Schema
 {
-    [Required]
     [Pattern(@"^[a-zA-Z0-9\-\.]+$")]
     [Description("The name of the Windows feature to manage.")]
-    public string Name { get; set; } = string.Empty;
+    public required string Name { get; set; } = string.Empty;
 
     [Description("Indicates whether to include all sub-features when enabling or disabling the feature.")]
     [Nullable(false)]
@@ -50,5 +49,5 @@ public sealed class Schema
     [Description("Metadata about the operation, including restart requirements.")]
     [ReadOnly]
     [Nullable(false)]
-    public Dictionary<string, object>? Metadata { get; set; }
+    public ResourceMetadata? Metadata { get; set; }
 }

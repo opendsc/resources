@@ -11,7 +11,7 @@ using Json.Schema.Generation;
 
 namespace OpenDsc.Resource.Windows.OptionalFeature;
 
-[DscResource("OpenDsc.Windows/OptionalFeature", Description = "Manage Windows optional features", Tags = ["windows", "feature", "dism"])]
+[DscResource("OpenDsc.Windows/OptionalFeature", Description = "Manage Windows optional features", Tags = ["windows", "feature", "dism"], SetReturn = SetReturn.State)]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Description = "Invalid parameter")]
 [ExitCode(2, Description = "Feature not found")]
@@ -52,7 +52,7 @@ public sealed class Resource(JsonSerializerContext context)
 
         if (beforeState.Exist == desiredExist)
         {
-            return null;
+            return new SetResult<Schema>(Get(instance));
         }
 
         DismRestartType restartType;
@@ -66,17 +66,20 @@ public sealed class Resource(JsonSerializerContext context)
             restartType = DismHelper.DisableFeature(instance.Name);
         }
 
-        var afterState = Get(instance);
+        var actualState = Get(instance);
 
         if (restartType == DismRestartType.Required || restartType == DismRestartType.Possible)
         {
-            afterState.Metadata = new Dictionary<string, object>
+            actualState.Metadata = new ResourceMetadata
             {
-                ["_restartRequired"] = new[] { new { system = Environment.MachineName } }
+                RestartRequired =
+                [
+                    new() { System = Environment.MachineName }
+                ]
             };
         }
 
-        return new SetResult<Schema>(afterState);
+        return new SetResult<Schema>(actualState);
     }
 
     public void Delete(Schema instance)

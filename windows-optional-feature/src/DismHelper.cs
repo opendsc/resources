@@ -8,6 +8,9 @@ namespace OpenDsc.Resource.Windows.OptionalFeature;
 
 internal static class DismHelper
 {
+    private const int ERROR_NOT_FOUND = unchecked((int)0x80070490);
+    private const int CBS_E_NOT_FOUND = unchecked((int)0x800F080C);
+
     public static (Schema schema, DismRestartType restartType) GetFeature(string featureName, bool? includeAllSubFeatures = null, string[]? source = null)
     {
         IntPtr session = IntPtr.Zero;
@@ -25,7 +28,7 @@ internal static class DismHelper
                 DismPackageIdentifier.None,
                 out featureInfoPtr);
 
-            if (hr == unchecked((int)0x80070490) || hr == unchecked((int)0x800F080C)) // ERROR_NOT_FOUND or CBS_E_NOT_FOUND
+            if (hr == ERROR_NOT_FOUND || hr == CBS_E_NOT_FOUND)
             {
                 return (new Schema
                 {
@@ -42,7 +45,6 @@ internal static class DismHelper
                     (errorMessage != null ? $" - {errorMessage}" : string.Empty));
             }
 
-            // Marshal the structure
             var featureInfo = Marshal.PtrToStructure<DismFeatureInfo>(featureInfoPtr);
 
             var isInstalled = featureInfo.State == DismPackageFeatureState.Installed ||
@@ -102,7 +104,6 @@ internal static class DismHelper
                     (errorMessage != null ? $" - {errorMessage}" : string.Empty));
             }
 
-            // Get feature info to check restart requirement
             var (_, restartType) = GetFeature(featureName, includeAllSubFeatures, sources);
             return restartType;
         }
@@ -131,7 +132,7 @@ internal static class DismHelper
                 IntPtr.Zero,
                 IntPtr.Zero);
 
-            if (hr != 0 && hr != unchecked((int)0x80070490)) // Ignore ERROR_NOT_FOUND
+            if (hr != 0 && hr != ERROR_NOT_FOUND)
             {
                 var errorMessage = DismApi.GetLastErrorMessage();
                 throw new InvalidOperationException(
@@ -139,7 +140,6 @@ internal static class DismHelper
                     (errorMessage != null ? $" - {errorMessage}" : string.Empty));
             }
 
-            // Get feature info to check restart requirement
             var (_, restartType) = GetFeature(featureName);
             return restartType;
         }
@@ -175,15 +175,11 @@ internal static class DismHelper
                     (errorMessage != null ? $" - {errorMessage}" : string.Empty));
             }
 
-            // DISM returns an array of DismFeature structures
             var structSize = Marshal.SizeOf<DismFeature>();
 
             for (var i = 0; i < count; i++)
             {
-                // Calculate pointer to current structure in array
                 var currentFeaturePtr = IntPtr.Add(featuresPtr, i * structSize);
-
-                // Marshal the structure
                 var feature = Marshal.PtrToStructure<DismFeature>(currentFeaturePtr);
 
                 if (!string.IsNullOrEmpty(feature.FeatureName))

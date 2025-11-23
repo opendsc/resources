@@ -61,7 +61,6 @@ public sealed class Schema
 {
     [Required]
     [Pattern(@"regex")]
-    [Nullable(false)]  // Prevents users from submitting null values
     public string Name { get; set; }
 
     [JsonPropertyName("_exist")]  // DSC canonical properties prefixed with _
@@ -90,30 +89,53 @@ DSC defines several canonical properties that provide shared semantics across re
   - Use in: Resources implementing `ITestable<Schema>`
 
 **Nullability Guidelines:**
-- Use `[Nullable(false)]` on properties where it doesn't make sense for users to submit `null` values (e.g., required strings, key properties)
-- DSC canonical properties like `_exist` should use nullable types (e.g., `bool?`) for their C# type
+- Use `[Nullable(false)]` only on C# nullable properties (those with `?`) where you want to prevent users from submitting `null` values in JSON (e.g., optional strings, booleans)
+- Non-nullable C# types (e.g., `string Name` with `[Required]`) don't need `[Nullable(false)]` - they already cannot be null
+- DSC canonical properties like `_exist` should use nullable types (e.g., `bool?`) for their C# type, and should have `[Nullable(false)]` to prevent explicit null submission
 - The `[Nullable]` attribute controls JSON deserialization behavior, while the `?` on the type controls C# nullability
 
 **Resource Metadata (`_metadata`):**
 
-Resources can return metadata in their results by including a `_metadata` property. The most important metadata property is `_restartRequired`, which indicates what needs to be restarted after a set operation:
+Resources can return metadata in their results by including a `_metadata` property in the schema returned by `Get()`. The most important metadata property is `_restartRequired`, which indicates what needs to be restarted after a set operation.
+
+When `Set()` needs to communicate metadata (like restart requirements), it should return a `SetResult<Schema>` containing the actual state with metadata attached. DSC automatically calls `Get()` before and after `Set()`, so you don't need to call `Get()` yourself to populate before/after states.
+
+**Important:** When your resource returns actual state from `Set()`, you must add `SetReturn = SetReturn.State` to the `[DscResource]` attribute. When this attribute is set, `Set()` must ALWAYS return a `SetResult<Schema>` with the actual state (never return `null`).
 
 ```csharp
-// Example: Returning restart metadata in Set() or Get()
-return new SetResult<Schema>
+[DscResource("OpenDsc.Windows/MyResource", SetReturn = SetReturn.State)]
+public sealed class Resource(JsonSerializerContext context)
+    : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>
 {
-    BeforeState = beforeState,
-    AfterState = afterState,
-    Metadata = new Dictionary<string, object>
+    public Schema Get(Schema instance)
     {
-        ["_restartRequired"] = new[]
-        {
-            new { system = Environment.MachineName },      // System restart
-            new { service = "serviceName" },               // Service restart
-            new { process = new { name = "app", id = 1234 } }  // Process restart
-        }
+        // ... get current state
     }
-};
+
+    public SetResult<Schema>? Set(Schema instance)
+    {
+        // ... perform the operation
+
+        // When SetReturn.State is used, always return actual state
+        var actualState = Get(instance);
+
+        // Example: Add metadata when restart is needed
+        if (restartRequired)
+        {
+            actualState.Metadata = new Dictionary<string, object>
+            {
+                ["_restartRequired"] = new[]
+                {
+                    new { system = Environment.MachineName },      // System restart
+                    new { service = "serviceName" },               // Service restart
+                    new { process = new { name = "app", id = 1234 } }  // Process restart
+                }
+            };
+        }
+
+        return new SetResult<Schema>(actualState);  // Always return actual state when SetReturn.State is set
+    }
+}
 ```
 
 **Restart Types:**
