@@ -48,5 +48,7 @@ public sealed class Schema
 
     [JsonPropertyName("_metadata")]
     [Description("Metadata about the operation, including restart requirements.")]
+    [ReadOnly]
+    [Nullable(false)]
     public Dictionary<string, object>? Metadata { get; set; }
 }
