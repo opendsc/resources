@@ -1,23 +1,23 @@
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Describe 'windows-feature' {
+Describe 'windows-optional-feature' {
     BeforeAll {
         $publishPath = Join-Path $PSScriptRoot '..\src\bin\Release\net9.0-windows\win-x64\publish'
         $env:Path += ";$publishPath"
 
-        $resourceName = 'OpenDsc.Windows/Feature'
+        $resourceName = 'OpenDsc.Windows/OptionalFeature'
         $testFeatureName = 'TelnetClient'
     }
 
     Context 'Discovery' {
         It 'should be found by dsc' {
-            $result = dsc resource list OpenDsc.Windows/Feature | ConvertFrom-Json
+            $result = dsc resource list OpenDsc.Windows/OptionalFeature | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
-            $result.type | Should -Be 'OpenDsc.Windows/Feature'
+            $result.type | Should -Be 'OpenDsc.Windows/OptionalFeature'
         }
 
         It 'should report correct capabilities' {
-            $result = dsc resource list OpenDsc.Windows/Feature | ConvertFrom-Json
+            $result = dsc resource list OpenDsc.Windows/OptionalFeature | ConvertFrom-Json
             $result.capabilities | Should -Contain 'get'
             $result.capabilities | Should -Contain 'set'
             $result.capabilities | Should -Contain 'delete'
@@ -25,15 +25,15 @@ Describe 'windows-feature' {
         }
 
         It 'should have a valid manifest' {
-            $manifest = Get-Content (Join-Path $publishPath 'windows-feature.dsc.resource.json') | ConvertFrom-Json
-            $manifest.type | Should -Be 'OpenDsc.Windows/Feature'
+            $manifest = Get-Content (Join-Path $publishPath 'windows-optional-feature.dsc.resource.json') | ConvertFrom-Json
+            $manifest.type | Should -Be 'OpenDsc.Windows/OptionalFeature'
             $manifest.version | Should -Not -BeNullOrEmpty
         }
     }
 
     Context 'Schema Validation' {
         It 'should have required properties in schema' {
-            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
+            $schemaJson = & (Join-Path $publishPath 'windows-optional-feature.exe') schema
             $schema = $schemaJson | ConvertFrom-Json
 
             $schema.properties | Should -Not -BeNullOrEmpty
@@ -43,7 +43,7 @@ Describe 'windows-feature' {
         }
 
         It 'should have _exist property with default value' {
-            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
+            $schemaJson = & (Join-Path $publishPath 'windows-optional-feature.exe') schema
             $schema = $schemaJson | ConvertFrom-Json
 
             $schema.properties._exist | Should -Not -BeNullOrEmpty
@@ -52,7 +52,7 @@ Describe 'windows-feature' {
         }
 
         It 'should have read-only properties marked correctly' {
-            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
+            $schemaJson = & (Join-Path $publishPath 'windows-optional-feature.exe') schema
             $schema = $schemaJson | ConvertFrom-Json
 
             $schema.properties.state | Should -Not -BeNullOrEmpty
@@ -62,7 +62,7 @@ Describe 'windows-feature' {
         }
 
         It 'should have _metadata property for restart information' {
-            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
+            $schemaJson = & (Join-Path $publishPath 'windows-optional-feature.exe') schema
             $schema = $schemaJson | ConvertFrom-Json
 
             $schema.properties._metadata | Should -Not -BeNullOrEmpty
@@ -70,7 +70,7 @@ Describe 'windows-feature' {
         }
 
         It 'should not allow additional properties' {
-            $schemaJson = & (Join-Path $publishPath 'windows-feature.exe') schema
+            $schemaJson = & (Join-Path $publishPath 'windows-optional-feature.exe') schema
             $schema = $schemaJson | ConvertFrom-Json
 
             $schema.additionalProperties | Should -Be $false

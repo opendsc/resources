@@ -5,7 +5,7 @@
 using System.Text.Json.Serialization;
 using OpenDsc.Resource.CommandLine;
 
-namespace OpenDsc.Resource.Windows.Feature;
+namespace OpenDsc.Resource.Windows.OptionalFeature;
 
 [JsonSourceGenerationOptions(
     WriteIndented = false,

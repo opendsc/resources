@@ -9,9 +9,9 @@ using System.Text.Json.Serialization;
 using Json.Schema;
 using Json.Schema.Generation;
 
-namespace OpenDsc.Resource.Windows.Feature;
+namespace OpenDsc.Resource.Windows.OptionalFeature;
 
-[DscResource("OpenDsc.Windows/Feature", Description = "Manage Windows optional features using the DISM API", Tags = ["windows", "feature", "dism"])]
+[DscResource("OpenDsc.Windows/OptionalFeature", Description = "Manage Windows optional features", Tags = ["windows", "feature", "dism"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Description = "Invalid parameter")]
 [ExitCode(2, Description = "Feature not found")]

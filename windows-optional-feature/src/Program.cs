@@ -5,7 +5,7 @@
 using System.CommandLine;
 
 using OpenDsc.Resource.CommandLine;
-using OpenDsc.Resource.Windows.Feature;
+using OpenDsc.Resource.Windows.OptionalFeature;
 
 var resource = new Resource(SourceGenerationContext.Default);
 var command = CommandBuilder<Resource, Schema>.Build(resource, SourceGenerationContext.Default);

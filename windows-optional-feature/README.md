@@ -1,4 +1,4 @@
-# OpenDsc.Windows/Feature Resource
+# OpenDsc.Windows/OptionalFeature Resource
 
 Manages Windows optional features using the native DISM (Deployment Image
 Servicing and Management) API.
@@ -48,7 +48,7 @@ Query if Telnet Client is installed:
 ```powershell
 @'
 name: TelnetClient
-'@ | dsc resource get -r OpenDsc.Windows/Feature
+'@ | dsc resource get -r OpenDsc.Windows/OptionalFeature
 ```
 
 Output:
@@ -69,7 +69,7 @@ Enable the Telnet Client feature:
 ```powershell
 @'
 name: TelnetClient
-'@ | dsc resource set -r OpenDsc.Windows/Feature
+'@ | dsc resource set -r OpenDsc.Windows/OptionalFeature
 ```
 
 **Note**: Requires administrator privileges
@@ -82,7 +82,7 @@ Enable IIS with all sub-features:
 @'
 name: IIS-WebServer
 includeAllSubFeatures: true
-'@ | dsc resource set -r OpenDsc.Windows/Feature
+'@ | dsc resource set -r OpenDsc.Windows/OptionalFeature
 ```
 
 ### Disable a Feature
@@ -93,7 +93,7 @@ Disable Telnet Client:
 @'
 name: TelnetClient
 _exist: false
-'@ | dsc resource set -r OpenDsc.Windows/Feature
+'@ | dsc resource set -r OpenDsc.Windows/OptionalFeature
 ```
 
 Or using delete:
@@ -101,7 +101,7 @@ Or using delete:
 ```powershell
 @'
 name: TelnetClient
-'@ | dsc resource delete -r OpenDsc.Windows/Feature
+'@ | dsc resource delete -r OpenDsc.Windows/OptionalFeature
 ```
 
 ### Export All Installed Features
@@ -109,20 +109,20 @@ name: TelnetClient
 List all currently installed features:
 
 ```powershell
-dsc resource export -r OpenDsc.Windows/Feature
+dsc resource export -r OpenDsc.Windows/OptionalFeature
 ```
 
 Output (excerpt):
 
 ```yaml
 resources:
-  - type: OpenDsc.Windows/Feature
+  - type: OpenDsc.Windows/OptionalFeature
     properties:
       name: NetFx4-AdvSrvs
       _exist: true
       state: Installed
       displayName: Microsoft .NET Framework 4.8 Advanced Services
-  - type: OpenDsc.Windows/Feature
+  - type: OpenDsc.Windows/OptionalFeature
     properties:
       name: Printing-Foundation-Features
       _exist: true
@@ -159,20 +159,20 @@ Use the resource in a DSC configuration:
 $schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2024/04/config/document.json
 resources:
   - name: Enable Telnet
-    type: OpenDsc.Windows/Feature
+    type: OpenDsc.Windows/OptionalFeature
     properties:
       name: TelnetClient
       _exist: true
 
   - name: Enable IIS Web Server
-    type: OpenDsc.Windows/Feature
+    type: OpenDsc.Windows/OptionalFeature
     properties:
       name: IIS-WebServer
       _exist: true
       includeAllSubFeatures: true
 
   - name: Remove SMB1
-    type: OpenDsc.Windows/Feature
+    type: OpenDsc.Windows/OptionalFeature
     properties:
       name: SMB1Protocol
       _exist: false

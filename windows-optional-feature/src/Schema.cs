@@ -5,7 +5,7 @@
 using System.Text.Json.Serialization;
 using Json.Schema.Generation;
 
-namespace OpenDsc.Resource.Windows.Feature;
+namespace OpenDsc.Resource.Windows.OptionalFeature;
 
 [Title("Windows Feature")]
 [Description("Manages Windows optional features using the DISM API.")]

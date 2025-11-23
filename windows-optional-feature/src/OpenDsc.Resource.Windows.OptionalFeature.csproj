@@ -9,7 +9,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <InvariantGlobalization>false</InvariantGlobalization>
-    <AssemblyName>windows-feature</AssemblyName>
+    <AssemblyName>windows-optional-feature</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

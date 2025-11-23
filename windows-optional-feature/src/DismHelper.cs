@@ -4,7 +4,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace OpenDsc.Resource.Windows.Feature;
+namespace OpenDsc.Resource.Windows.OptionalFeature;
 
 internal static class DismHelper
 {
