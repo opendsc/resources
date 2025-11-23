@@ -7,8 +7,8 @@ using Json.Schema.Generation;
 
 namespace OpenDsc.Resource.Windows.OptionalFeature;
 
-[Title("Windows Feature")]
-[Description("Manages Windows optional features.")]
+[Title("Windows Optional Feature Schema")]
+[Description("Schema for managing Windows optional features via OpenDsc.")]
 [AdditionalProperties(false)]
 public sealed class Schema
 {
