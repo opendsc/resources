@@ -42,8 +42,11 @@ public sealed class Resource(JsonSerializerContext context)
 ```
 
 **Interface Contract (all interfaces are optional, implement those that make sense):**
-- `IGettable.Get(Schema)` → return current state (set `Exist = false` if not found)
+- `IGettable.Get(Schema)` → return current state
+  - Set `Exist = false` if resource not found (explicitly set to false)
+  - Do NOT set `Exist = true` if resource exists (true is the default value, omit the property)
 - `ISettable.Set(Schema)` → apply changes, return `null` or `SetResult<Schema>`
+  - **Important:** Do NOT check `_exist` in `Set()` - the DSC engine calls `Set()` when `_exist=true` and `Delete()` when `_exist=false`
 - `IDeletable.Delete(Schema)` → remove resource
 - `IExportable.Export()` → yield all instances
 
@@ -62,6 +65,10 @@ public sealed class Schema
     [Required]
     [Pattern(@"regex")]
     public string Name { get; set; }
+
+    [WriteOnly]  // Property accepted in Set but never returned by Get
+    [Nullable(false)]
+    public string? Password { get; set; }
 
     [JsonPropertyName("_exist")]  // DSC canonical properties prefixed with _
     [Default(true)]
@@ -93,6 +100,17 @@ DSC defines several canonical properties that provide shared semantics across re
 - Non-nullable C# types (e.g., `string Name` with `[Required]`) don't need `[Nullable(false)]` - they already cannot be null
 - DSC canonical properties like `_exist` should use nullable types (e.g., `bool?`) for their C# type, and should have `[Nullable(false)]` to prevent explicit null submission
 - The `[Nullable]` attribute controls JSON deserialization behavior, while the `?` on the type controls C# nullability
+
+**Write-Only Properties:**
+- Use `[WriteOnly]` on sensitive properties (e.g., passwords) that should be accepted during `Set()` but never returned by `Get()`
+- Write-only properties are marked with `"writeOnly": true` in the JSON schema
+- Common use case: password fields that should not be exposed when reading resource state
+
+**Read-Only Properties:**
+- Use `[ReadOnly]` on computed or status properties that are returned by `Get()` but should not be accepted during `Set()`
+- Read-only properties are marked with `"readOnly": true` in the JSON schema
+- Common use cases: state properties, display names, descriptions, metadata, or any computed values
+- Example: `State`, `DisplayName`, `Description`, `_metadata` properties
 
 **Resource Metadata (`_metadata`):**
 
@@ -192,6 +210,58 @@ dsc resource delete -r OpenDsc.Windows/Environment --input '{"name":"TEST"}'
 
 **Test Pattern:** Create → Verify → Cleanup (always cleanup in `AfterEach`/`AfterAll`)
 **No unit tests** - resources are tested through published executables via DSC CLI
+
+### Admin-Required Test Pattern
+
+Many resources require administrative privileges for certain operations (e.g., creating users, managing services, installing features). Use the following pattern to handle admin-required tests:
+
+```powershell
+# Check if running as admin at the start of the test file
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+Describe 'resource-name' {
+    # Non-elevated tests run always
+    Context 'Discovery' {
+        It 'should be found by dsc' {
+            # ... test code
+        }
+    }
+
+    Context 'Get Operation - Non-Elevated' {
+        It 'should return _exist=false for non-existent resource' {
+            # ... test code
+        }
+    }
+
+    # Admin-required tests are skipped when not running as admin
+    Context 'Set Operation' -Skip:(!$isAdmin) {
+        It 'should create resource' {
+            # ... test code requiring admin
+        }
+
+        AfterEach {
+            # Always cleanup test resources
+        }
+    }
+
+    Context 'Delete Operation' -Skip:(!$isAdmin) {
+        BeforeEach {
+            # Create test resource
+        }
+
+        It 'should delete resource' {
+            # ... test code
+        }
+    }
+}
+```
+
+**Key Points:**
+- Use `$isAdmin` variable to check elevation status at the start of the test file
+- Apply `-Skip:(!$isAdmin)` to `Context` blocks that require admin privileges
+- Keep non-elevated tests (Discovery, Schema Validation, Get operations) in separate contexts that always run
+- Always cleanup test resources in `AfterEach`/`AfterAll` blocks, even in elevated contexts
+- Test both elevated and non-elevated scenarios where applicable
 
 ## Project-Specific Conventions
 
@@ -333,7 +403,9 @@ Use `windows-environment` as the template - it's the simplest, most complete exa
    - `Resource.cs` - Core implementation with `[DscResource]` attribute
    - `Schema.cs` - Property definitions with JSON Schema attributes and `[Nullable(false)]` on non-nullable properties
    - `SourceGenerationContext.cs` - Update type references for your schema
-   - `*.csproj` - Update `AssemblyName`, add platform-specific packages if needed
+   - `*.csproj` - Update `AssemblyName`, set target framework, add platform-specific packages if needed
+     - Use `<TargetFramework>net9.0-windows</TargetFramework>` for resources using Windows-only APIs (e.g., `System.DirectoryServices.AccountManagement`, COM interop, Win32 APIs)
+     - Use `<TargetFramework>net9.0</TargetFramework>` for resources using only cross-platform APIs
 
 3. **Implement Resource class:**
    - Inherit from `AotDscResource<Schema>` with context parameter
@@ -378,7 +450,11 @@ Use `windows-environment` as the template - it's the simplest, most complete exa
    </Target>
    ```
 
-8. **Verify:**
+8. **Fix IDE problems:**
+   - Check and resolve all IDE/VS Code diagnostics (warnings, errors, suggestions)
+   - Remove unused variables, unnecessary using directives, and other code issues
+
+9. **Verify:**
    - File headers present in all `.cs` files (MIT license)
    - Build succeeds: `.\build.ps1`
    - Tests pass: manifest generated, all Pester tests green
