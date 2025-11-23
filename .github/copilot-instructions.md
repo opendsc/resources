@@ -90,10 +90,59 @@ DSC defines several canonical properties that provide shared semantics across re
   - Use in: Resources that manage instance lifecycle
 
 - **`_purge` (bool?)** - Write-only property for list-based resources to indicate whether unmanaged entries should be removed. Useful for resources managing collections where you want to either allow or remove items not explicitly defined.
+  - Default: `false` (additive mode - only add specified items)
+  - When `true`: Exact mode - removes items not in the specified list
+  - When `false`: Additive mode - only adds items from the list without removing others
   - Use in: Resources managing lists/collections (e.g., group members, installed features)
+  - Mark with `[WriteOnly]` attribute since it's a control property, not state
+  - Example: `windows-group` resource uses `_purge` to control group membership behavior
 
 - **`_inDesiredState` (bool?)** - Read-only property indicating whether the instance is in desired state. Mandatory for resources that implement the `test` operation.
   - Use in: Resources implementing `ITestable<Schema>`
+
+**`_purge` Implementation Pattern:**
+
+For resources managing collections (e.g., group members, list items), implement the `_purge` pattern:
+
+```csharp
+// Schema.cs
+[Description("List of items in the collection.")]
+[Nullable(false)]
+public string[]? Items { get; set; }
+
+[JsonPropertyName("_purge")]
+[Description("When true, removes items not in the Items list. When false, only adds items from the Items list without removing others.")]
+[Nullable(false)]
+[WriteOnly]
+[Default(false)]
+public bool? Purge { get; set; }
+
+// Resource.cs - Set() implementation
+if (instance.Items != null)
+{
+    var currentItems = new HashSet<string>(GetCurrentItems(resource), StringComparer.OrdinalIgnoreCase);
+    var desiredItems = new HashSet<string>(instance.Items, StringComparer.OrdinalIgnoreCase);
+
+    // When _purge is true, remove items not in desired list (exact mode)
+    if (instance.Purge == true)
+    {
+        var toRemove = currentItems.Except(desiredItems).ToList();
+        foreach (var item in toRemove)
+        {
+            RemoveItem(resource, item);
+            changed = true;
+        }
+    }
+
+    // Add items not in current list (for both purge=true and purge=false)
+    var toAdd = desiredItems.Except(currentItems).ToList();
+    foreach (var item in toAdd)
+    {
+        AddItem(resource, item);
+        changed = true;
+    }
+}
+```
 
 **Nullability Guidelines:**
 - Use `[Nullable(false)]` only on C# nullable properties (those with `?`) where you want to prevent users from submitting `null` values in JSON (e.g., optional strings, booleans)
@@ -264,6 +313,25 @@ Describe 'resource-name' {
 - Test both elevated and non-elevated scenarios where applicable
 
 ## Project-Specific Conventions
+
+### Code Style and Comments
+
+**Comment Usage:**
+- **Avoid self-explanatory comments** - code should be self-documenting through clear naming
+- **Remove comments that merely restate the code** (e.g., "// Try to find as user first" before `UserPrincipal.FindByIdentity()`)
+- **Keep comments only for non-obvious logic** or complex algorithms
+- **Empty catch blocks** don't need comments like "// Ignore errors" - the empty block itself indicates the intent
+- **File headers** are required (MIT license) - this is enforced by IDE0073
+
+**Examples of comments to avoid:**
+```csharp
+// BAD: Restates the obvious
+// When _purge is true, remove members not in desired list
+if (instance.Purge == true) { ... }
+
+// GOOD: No comment needed, code is clear
+if (instance.Purge == true) { ... }
+```
 
 ### Source Generation (Required for AOT)
 
