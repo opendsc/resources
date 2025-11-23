@@ -65,7 +65,7 @@ internal static class DismHelper
         {
             if (featureInfoPtr != IntPtr.Zero)
             {
-                DismApi.DismDelete(featureInfoPtr);
+                _ = DismApi.DismDelete(featureInfoPtr);
             }
             DismApi.CloseSession(session);
             DismApi.Shutdown();
@@ -199,7 +199,7 @@ internal static class DismHelper
         {
             if (featuresPtr != IntPtr.Zero)
             {
-                DismApi.DismDelete(featuresPtr);
+                _ = DismApi.DismDelete(featuresPtr);
             }
             DismApi.CloseSession(session);
             DismApi.Shutdown();
