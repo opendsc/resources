@@ -75,8 +75,7 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
             XPath = instance.XPath,
             Value = element.Value,
             Attributes = attributes.Count > 0 ? attributes : null,
-            Namespaces = instance.Namespaces,
-            Exist = true
+            Namespaces = instance.Namespaces
         };
     }
 

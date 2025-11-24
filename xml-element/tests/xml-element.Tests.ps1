@@ -76,7 +76,7 @@ Describe 'xml-element' {
 
             $result = dsc resource get -r OpenDsc.Xml/Element --input $inputJson | ConvertFrom-Json
             $result.actualState.value | Should -Be 'Debug'
-            $result.actualState._exist | Should -Be $true
+            $result.actualState._exist | Should -BeNullOrEmpty
         }
 
         It 'should read element attributes' {
