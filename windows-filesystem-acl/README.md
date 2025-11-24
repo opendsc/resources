@@ -42,12 +42,13 @@ supports:
 - **accessRules** (array): List of access control entries (ACEs) to apply. Each
   entry contains:
   - **identity** (required, string): The user or group the rule applies to
-  - **rights** (required, enum): File system rights (e.g., `Read`, `Write`,
-    `FullControl`, `Modify`)
-  - **inheritanceFlags** (enum): How the rule is inherited (`None`,
-    `ContainerInherit`, `ObjectInherit`)
-  - **propagationFlags** (enum): How inheritance is propagated (`None`,
-    `NoPropagateInherit`, `InheritOnly`)
+  - **rights** (required, array): Array of file system rights (e.g., `["Read"]`,
+    `["Read", "Write"]`, `["FullControl"]`). Multiple rights can be combined.
+  - **inheritanceFlags** (array): Array of inheritance flags. How the rule is
+    inherited (`["None"]`, `["ContainerInherit"]`, `["ObjectInherit"]`,
+    `["ContainerInherit", "ObjectInherit"]`)
+  - **propagationFlags** (array): Array of propagation flags. How inheritance is
+    propagated (`["None"]`, `["NoPropagateInherit"]`, `["InheritOnly"]`)
   - **accessControlType** (required, enum): `Allow` or `Deny`
 
 ### DSC Canonical Properties
@@ -59,21 +60,31 @@ supports:
 
 ## File System Rights
 
-The resource supports the following rights:
+The resource supports the following rights (specified as arrays):
 
-- `ReadData` / `Read` / `ReadAndExecute`
-- `WriteData` / `Write`
-- `AppendData`
-- `ReadExtendedAttributes` / `WriteExtendedAttributes`
-- `ReadAttributes` / `WriteAttributes`
-- `ExecuteFile`
-- `DeleteSubdirectoriesAndFiles`
-- `Delete`
-- `ReadPermissions` / `ChangePermissions`
-- `TakeOwnership`
-- `Synchronize`
-- `FullControl`
-- `Modify`
+- `ListDirectory` - List directory contents
+- `CreateFiles` - Create files
+- `CreateDirectories` - Create subdirectories
+- `ReadExtendedAttributes` - Read extended attributes
+- `WriteExtendedAttributes` - Write extended attributes
+- `Traverse` - Traverse/execute
+- `DeleteSubdirectoriesAndFiles` - Delete child items
+- `ReadAttributes` - Read file attributes
+- `WriteAttributes` - Write file attributes
+- `Write` - Write data (combination of WriteData, AppendData,
+  WriteExtendedAttributes, WriteAttributes)
+- `Delete` - Delete file/directory
+- `ReadPermissions` - Read permissions
+- `Read` - Read access (combination of ListDirectory, ReadData, ReadAttributes,
+  ReadExtendedAttributes, ReadPermissions)
+- `ReadAndExecute` - Read and execute (combination of Read and ExecuteFile)
+- `Modify` - Modify access (combination of ReadAndExecute, Write, Delete)
+- `ChangePermissions` - Change permissions
+- `TakeOwnership` - Take ownership
+- `Synchronize` - Synchronize access
+- `FullControl` - Full control (all rights)
+
+Rights are specified as arrays and can be combined, e.g., `["Read", "Write"]`.
 
 ## Examples
 
@@ -109,9 +120,12 @@ resources:
       path: C:\MyFolder
       accessRules:
         - identity: BUILTIN\Users
-          rights: Read
-          inheritanceFlags: ContainerInherit
-          propagationFlags: None
+          rights:
+            - Read
+          inheritanceFlags:
+            - ContainerInherit
+          propagationFlags:
+            - None
           accessControlType: Allow
       _purge: false
 ```
@@ -126,14 +140,20 @@ resources:
       path: C:\MyFolder
       accessRules:
         - identity: BUILTIN\Administrators
-          rights: FullControl
-          inheritanceFlags: ContainerInherit
-          propagationFlags: None
+          rights:
+            - FullControl
+          inheritanceFlags:
+            - ContainerInherit
+          propagationFlags:
+            - None
           accessControlType: Allow
         - identity: BUILTIN\Users
-          rights: Read
-          inheritanceFlags: ContainerInherit
-          propagationFlags: None
+          rights:
+            - Read
+          inheritanceFlags:
+            - ContainerInherit
+          propagationFlags:
+            - None
           accessControlType: Allow
       _purge: true
 ```
@@ -148,8 +168,31 @@ resources:
       path: C:\MyFolder
       accessRules:
         - identity: DOMAIN\RestrictedUser
-          rights: Write
+          rights:
+            - Write
           accessControlType: Deny
+```
+
+### Example 6: Combine multiple rights
+
+```yaml
+resources:
+  - name: GrantMultipleRights
+    type: OpenDsc.Windows.FileSystem/AccessControlList
+    properties:
+      path: C:\MyFolder
+      accessRules:
+        - identity: BUILTIN\Users
+          rights:
+            - Read
+            - Write
+            - Delete
+          inheritanceFlags:
+            - ContainerInherit
+            - ObjectInherit
+          propagationFlags:
+            - None
+          accessControlType: Allow
 ```
 
 ## Operations
@@ -177,7 +220,7 @@ $config = @{
     accessRules = @(
         @{
             identity = 'BUILTIN\Users'
-            rights = 'Read'
+            rights = @('Read')
             accessControlType = 'Allow'
         }
     )
