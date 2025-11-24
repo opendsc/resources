@@ -409,7 +409,7 @@ public Schema Get(Schema instance)
 {
     try {
         // Attempt to read resource
-        return new Schema { Name = instance.Name, Value = value, Exist = true };
+        return new Schema { Name = instance.Name, Value = value };
     }
     catch (ResourceNotFoundException) {
         return new Schema { Name = instance.Name, Exist = false };

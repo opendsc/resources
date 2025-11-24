@@ -147,7 +147,6 @@ Describe 'windows-optional-feature' {
         It 'should enable a feature' {
             $inputJson = @{
                 name = $testFeatureName
-                _exist = $true
             } | ConvertTo-Json -Compress
 
             $result = dsc resource set -r $resourceName --input $inputJson | ConvertFrom-Json
@@ -166,7 +165,6 @@ Describe 'windows-optional-feature' {
         It 'should disable a feature using _exist=false' {
             $enableJson = @{
                 name = $testFeatureName
-                _exist = $true
             } | ConvertTo-Json -Compress
 
             dsc resource set -r $resourceName --input $enableJson | Out-Null
@@ -174,7 +172,6 @@ Describe 'windows-optional-feature' {
 
             $disableJson = @{
                 name = $testFeatureName
-                _exist = $false
             } | ConvertTo-Json -Compress
 
             $result = dsc resource set -r $resourceName --input $disableJson | ConvertFrom-Json
@@ -192,7 +189,6 @@ Describe 'windows-optional-feature' {
         It 'should be idempotent when feature already enabled' {
             $inputJson = @{
                 name = $testFeatureName
-                _exist = $true
             } | ConvertTo-Json -Compress
 
             dsc resource set -r $resourceName --input $inputJson | Out-Null
@@ -214,7 +210,6 @@ Describe 'windows-optional-feature' {
             try {
                 $inputJson = @{
                     name = $testFeatureName
-                    _exist = $true
                 } | ConvertTo-Json -Compress
 
                 dsc resource set -r $resourceName --input $inputJson | Out-Null
@@ -287,7 +282,6 @@ Describe 'windows-optional-feature' {
         It 'should include _metadata._restartRequired when feature requires restart' {
             $inputJson = @{
                 name = $testFeatureName
-                _exist = $true
             } | ConvertTo-Json -Compress
 
             $result = dsc resource set -r $resourceName --input $inputJson | ConvertFrom-Json
