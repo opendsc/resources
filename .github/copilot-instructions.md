@@ -150,16 +150,25 @@ if (instance.Items != null)
 - DSC canonical properties like `_exist` should use nullable types (e.g., `bool?`) for their C# type, and should have `[Nullable(false)]` to prevent explicit null submission
 - The `[Nullable]` attribute controls JSON deserialization behavior, while the `?` on the type controls C# nullability
 
-**Write-Only Properties:**
-- Use `[WriteOnly]` on sensitive properties (e.g., passwords) that should be accepted during `Set()` but never returned by `Get()`
-- Write-only properties are marked with `"writeOnly": true` in the JSON schema
-- Common use case: password fields that should not be exposed when reading resource state
+**Property Read/Write Patterns:**
 
-**Read-Only Properties:**
-- Use `[ReadOnly]` on computed or status properties that are returned by `Get()` but should not be accepted during `Set()`
-- Read-only properties are marked with `"readOnly": true` in the JSON schema
-- Common use cases: state properties, display names, descriptions, metadata, or any computed values
-- Example: `State`, `DisplayName`, `Description`, `_metadata` properties
+By default, properties serve **dual purposes** - both as input for `Set()` and output from `Get()`. This is the preferred pattern.
+
+- **Standard properties** (no attribute): Used for both input and output
+  - Example: `Value`, `Attributes`, `Members` - accepted as desired state in `Set()`, returned as actual state from `Get()`
+  - This is the most common and preferred pattern
+
+- **Write-Only Properties** (`[WriteOnly]`): Only accepted during `Set()`, never returned by `Get()`
+  - Use for sensitive data (e.g., passwords) or control properties (e.g., `_purge`)
+  - Write-only properties are marked with `"writeOnly": true` in the JSON schema
+  - Example: `Password`, `_purge`
+
+- **Read-Only Properties** (`[ReadOnly]`): Only returned by `Get()`, rejected if provided to `Set()`
+  - Use for computed or status properties that users cannot directly set
+  - Read-only properties are marked with `"readOnly": true` in the JSON schema
+  - Example: `State`, `DisplayName`, `Description`, `_metadata`
+
+**Important:** Don't create separate "current" properties for read operations (e.g., `CurrentValue` and `Value`). Instead, use the same property for both input and output unless there's a specific reason to restrict access with `[ReadOnly]` or `[WriteOnly]`.
 
 **Resource Metadata (`_metadata`):**
 
