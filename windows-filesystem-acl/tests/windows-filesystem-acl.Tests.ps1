@@ -107,16 +107,15 @@ Describe 'windows-filesystem-acl' {
                 accessRules = @(
                     @{
                         identity = 'BUILTIN\Users'
-                        rights = 'Read'
+                        rights = @('Read')
                         accessControlType = 'Allow'
                     }
                 )
-            } | ConvertTo-Json -Compress
+            } | ConvertTo-Json -Depth 3
 
             dsc resource set -r OpenDsc.Windows.FileSystem/AccessControlList --input $inputJson | Out-Null
             $LASTEXITCODE | Should -Be 0
 
-            # Verify the rule was added
             $verifyJson = @{
                 path = $script:testFile
             } | ConvertTo-Json -Compress
@@ -132,12 +131,12 @@ Describe 'windows-filesystem-acl' {
                 accessRules = @(
                     @{
                         identity = 'BUILTIN\Users'
-                        rights = 'Read'
+                        rights = @('Read')
                         accessControlType = 'Allow'
                     },
                     @{
                         identity = 'BUILTIN\Administrators'
-                        rights = 'FullControl'
+                        rights = @('FullControl')
                         accessControlType = 'Allow'
                     }
                 )
@@ -146,7 +145,6 @@ Describe 'windows-filesystem-acl' {
             dsc resource set -r OpenDsc.Windows.FileSystem/AccessControlList --input $inputJson | Out-Null
             $LASTEXITCODE | Should -Be 0
 
-            # Verify both rules exist
             $verifyJson = @{
                 path = $script:testFile
             } | ConvertTo-Json -Compress
@@ -161,9 +159,9 @@ Describe 'windows-filesystem-acl' {
                 accessRules = @(
                     @{
                         identity = 'BUILTIN\Users'
-                        rights = 'Read'
-                        inheritanceFlags = 'ContainerInherit'
-                        propagationFlags = 'None'
+                        rights = @('Read')
+                        inheritanceFlags = @('ContainerInherit')
+                        propagationFlags = @('None')
                         accessControlType = 'Allow'
                     }
                 )
@@ -172,7 +170,6 @@ Describe 'windows-filesystem-acl' {
             dsc resource set -r OpenDsc.Windows.FileSystem/AccessControlList --input $inputJson | Out-Null
             $LASTEXITCODE | Should -Be 0
 
-            # Verify the rule with inheritance was added
             $verifyJson = @{
                 path = $script:testDir
             } | ConvertTo-Json -Compress
@@ -206,7 +203,6 @@ Describe 'windows-filesystem-acl' {
             dsc resource set -r OpenDsc.Windows.FileSystem/AccessControlList --input $inputJson | Out-Null
             $LASTEXITCODE | Should -Be 0
 
-            # Verify owner changed
             $verifyJson = @{
                 path = $script:tempFile
             } | ConvertTo-Json -Compress
@@ -229,13 +225,12 @@ Describe 'windows-filesystem-acl' {
         }
 
         It 'should not remove existing rules when _purge is false' {
-            # First, add a rule
             $inputJson1 = @{
                 path = $script:purgeTestFile
                 accessRules = @(
                     @{
                         identity = 'BUILTIN\Users'
-                        rights = 'Read'
+                        rights = @('Read')
                         accessControlType = 'Allow'
                     }
                 )
@@ -244,7 +239,6 @@ Describe 'windows-filesystem-acl' {
 
             dsc resource set -r OpenDsc.Windows.FileSystem/AccessControlList --input $inputJson1 | Out-Null
 
-            # Get current rules count
             $verifyJson = @{
                 path = $script:purgeTestFile
             } | ConvertTo-Json -Compress
@@ -252,13 +246,12 @@ Describe 'windows-filesystem-acl' {
             $result1 = dsc resource get -r OpenDsc.Windows.FileSystem/AccessControlList --input $verifyJson | ConvertFrom-Json
             $initialCount = $result1.actualState.accessRules.Count
 
-            # Add another rule without purging
             $inputJson2 = @{
                 path = $script:purgeTestFile
                 accessRules = @(
                     @{
                         identity = 'BUILTIN\Administrators'
-                        rights = 'FullControl'
+                        rights = @('FullControl')
                         accessControlType = 'Allow'
                     }
                 )
@@ -267,9 +260,161 @@ Describe 'windows-filesystem-acl' {
 
             dsc resource set -r OpenDsc.Windows.FileSystem/AccessControlList --input $inputJson2 | Out-Null
 
-            # Verify both rules still exist
             $result2 = dsc resource get -r OpenDsc.Windows.FileSystem/AccessControlList --input $verifyJson | ConvertFrom-Json
             $result2.actualState.accessRules.Count | Should -BeGreaterOrEqual $initialCount
+        }
+    }
+
+    Context 'Schema Validation' {
+        It 'should have no duplicate enum values in rights' {
+            $schemaJson = dsc resource schema -r OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
+            $rightsEnum = $schemaJson.properties.accessRules.items.properties.rights.items.enum
+            $uniqueRights = $rightsEnum | Select-Object -Unique
+            $rightsEnum.Count | Should -Be $uniqueRights.Count
+        }
+
+        It 'should have no duplicate enum values in inheritanceFlags' {
+            $schemaJson = dsc resource schema -r OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
+            $inheritEnum = $schemaJson.properties.accessRules.items.properties.inheritanceFlags.items.enum
+            $uniqueInherit = $inheritEnum | Select-Object -Unique
+            $inheritEnum.Count | Should -Be $uniqueInherit.Count
+        }
+
+        It 'should have no duplicate enum values in propagationFlags' {
+            $schemaJson = dsc resource schema -r OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
+            $propEnum = $schemaJson.properties.accessRules.items.properties.propagationFlags.items.enum
+            $uniqueProp = $propEnum | Select-Object -Unique
+            $propEnum.Count | Should -Be $uniqueProp.Count
+        }
+
+        It 'should mark rights as uniqueItems in schema' {
+            $schemaJson = dsc resource schema -r OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
+            $rightsSchema = $schemaJson.properties.accessRules.items.properties.rights
+            $rightsSchema.uniqueItems | Should -Be $true
+        }
+
+        It 'should mark inheritanceFlags as uniqueItems in schema' {
+            $schemaJson = dsc resource schema -r OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
+            $inheritSchema = $schemaJson.properties.accessRules.items.properties.inheritanceFlags
+            $inheritSchema.uniqueItems | Should -Be $true
+        }
+
+        It 'should mark propagationFlags as uniqueItems in schema' {
+            $schemaJson = dsc resource schema -r OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
+            $propSchema = $schemaJson.properties.accessRules.items.properties.propagationFlags
+            $propSchema.uniqueItems | Should -Be $true
+        }
+
+        It 'should define rights as array type' {
+            $schemaJson = dsc resource schema -r OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
+            $rightsSchema = $schemaJson.properties.accessRules.items.properties.rights
+            $rightsSchema.type | Should -Be 'array'
+        }
+
+        It 'should define inheritanceFlags as array type' {
+            $schemaJson = dsc resource schema -r OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
+            $inheritSchema = $schemaJson.properties.accessRules.items.properties.inheritanceFlags
+            $inheritSchema.type | Should -Be 'array'
+        }
+
+        It 'should define propagationFlags as array type' {
+            $schemaJson = dsc resource schema -r OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
+            $propSchema = $schemaJson.properties.accessRules.items.properties.propagationFlags
+            $propSchema.type | Should -Be 'array'
+        }
+    }
+
+    Context 'Multiple Selection in Arrays' -Skip:(!$isAdmin) {
+        BeforeEach {
+            $script:multiSelectDir = Join-Path $env:TEMP "DscAclMultiSelect_$(Get-Random)"
+            New-Item -Path $script:multiSelectDir -ItemType Directory -Force | Out-Null
+        }
+
+        AfterEach {
+            if (Test-Path $script:multiSelectDir) {
+                Remove-Item -Path $script:multiSelectDir -Recurse -Force
+            }
+        }
+
+        It 'should accept multiple rights in array format' {
+            $inputJson = @{
+                path = $script:multiSelectDir
+                accessRules = @(
+                    @{
+                        identity = 'BUILTIN\Users'
+                        rights = @('Read', 'Write')
+                        accessControlType = 'Allow'
+                    }
+                )
+            } | ConvertTo-Json -Depth 3
+
+            dsc resource set -r OpenDsc.Windows.FileSystem/AccessControlList --input $inputJson | Out-Null
+            $LASTEXITCODE | Should -Be 0
+
+            $verifyJson = @{
+                path = $script:multiSelectDir
+            } | ConvertTo-Json -Compress
+
+            $getResult = dsc resource get -r OpenDsc.Windows.FileSystem/AccessControlList --input $verifyJson | ConvertFrom-Json
+            $usersRule = $getResult.actualState.accessRules | Where-Object { $_.identity -like '*Users' }
+            $usersRule | Should -Not -BeNullOrEmpty
+            $usersRule.rights | Should -Contain 'Read'
+            $usersRule.rights | Should -Contain 'Write'
+        }
+
+        It 'should accept multiple inheritance flags' {
+            $inputJson = @{
+                path = $script:multiSelectDir
+                accessRules = @(
+                    @{
+                        identity = 'BUILTIN\Users'
+                        rights = @('Read')
+                        inheritanceFlags = @('ContainerInherit', 'ObjectInherit')
+                        propagationFlags = @('None')
+                        accessControlType = 'Allow'
+                    }
+                )
+            } | ConvertTo-Json -Depth 3
+
+            dsc resource set -r OpenDsc.Windows.FileSystem/AccessControlList --input $inputJson | Out-Null
+            $LASTEXITCODE | Should -Be 0
+
+            $verifyJson = @{
+                path = $script:multiSelectDir
+            } | ConvertTo-Json -Compress
+
+            $getResult = dsc resource get -r OpenDsc.Windows.FileSystem/AccessControlList --input $verifyJson | ConvertFrom-Json
+            $usersRule = $getResult.actualState.accessRules | Where-Object { $_.identity -like '*Users' }
+            $usersRule | Should -Not -BeNullOrEmpty
+            $usersRule.inheritanceFlags | Should -Contain 'ContainerInherit'
+            $usersRule.inheritanceFlags | Should -Contain 'ObjectInherit'
+        }
+
+        It 'should combine multiple rights correctly' {
+            $inputJson = @{
+                path = $script:multiSelectDir
+                accessRules = @(
+                    @{
+                        identity = 'BUILTIN\Users'
+                        rights = @('ListDirectory', 'CreateFiles', 'ReadAttributes')
+                        accessControlType = 'Allow'
+                    }
+                )
+            } | ConvertTo-Json -Depth 3
+
+            dsc resource set -r OpenDsc.Windows.FileSystem/AccessControlList --input $inputJson | Out-Null
+            $LASTEXITCODE | Should -Be 0
+
+            $verifyJson = @{
+                path = $script:multiSelectDir
+            } | ConvertTo-Json -Compress
+
+            $getResult = dsc resource get -r OpenDsc.Windows.FileSystem/AccessControlList --input $verifyJson | ConvertFrom-Json
+            $usersRule = $getResult.actualState.accessRules | Where-Object { $_.identity -like '*Users' }
+            $usersRule | Should -Not -BeNullOrEmpty
+            $usersRule.rights | Should -Contain 'ListDirectory'
+            $usersRule.rights | Should -Contain 'CreateFiles'
+            $usersRule.rights | Should -Contain 'ReadAttributes'
         }
     }
 
@@ -294,7 +439,7 @@ Describe 'windows-filesystem-acl' {
                     accessRules = @(
                         @{
                             identity = 'InvalidDomain\InvalidUser12345'
-                            rights = 'Read'
+                            rights = @('Read')
                             accessControlType = 'Allow'
                         }
                     )

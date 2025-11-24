@@ -11,6 +11,8 @@ using System.Text.Json.Serialization;
 using Json.Schema;
 using Json.Schema.Generation;
 
+using SysFileSystemRights = System.Security.AccessControl.FileSystemRights;
+
 namespace OpenDsc.Resource.Windows.FileSystemAcl;
 
 [DscResource("OpenDsc.Windows.FileSystem/AccessControlList", Description = "Manage Windows file and directory permissions", Tags = ["windows", "filesystem", "acl", "permissions", "security"])]
@@ -83,9 +85,9 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
             accessRules.Add(new AccessRule
             {
                 Identity = identity.Value,
-                Rights = rule.FileSystemRights,
-                InheritanceFlags = rule.InheritanceFlags,
-                PropagationFlags = rule.PropagationFlags,
+                Rights = EnumHelper.ConvertFromSystem(rule.FileSystemRights),
+                InheritanceFlags = EnumHelper.ExpandFlags(rule.InheritanceFlags),
+                PropagationFlags = EnumHelper.ExpandFlags(rule.PropagationFlags),
                 AccessControlType = rule.AccessControlType
             });
         }
@@ -154,9 +156,9 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
             var desiredRules = instance.AccessRules.Select(r => new
             {
                 Identity = ResolveIdentity(r.Identity),
-                r.Rights,
-                r.InheritanceFlags,
-                r.PropagationFlags,
+                Rights = EnumHelper.ConvertToSystem(EnumHelper.CombineFlags(r.Rights)),
+                InheritanceFlags = EnumHelper.CombineFlags(r.InheritanceFlags),
+                PropagationFlags = EnumHelper.CombineFlags(r.PropagationFlags),
                 r.AccessControlType
             }).ToList();
 
@@ -243,9 +245,9 @@ public sealed class Resource(JsonSerializerContext context) : AotDscResource<Sch
         }
     }
 
-    private static List<(IdentityReference Identity, FileSystemRights Rights, InheritanceFlags InheritanceFlags, PropagationFlags PropagationFlags, AccessControlType AccessControlType)> GetCurrentAccessRules(FileSystemSecurity security)
+    private static List<(IdentityReference Identity, SysFileSystemRights Rights, InheritanceFlags InheritanceFlags, PropagationFlags PropagationFlags, AccessControlType AccessControlType)> GetCurrentAccessRules(FileSystemSecurity security)
     {
-        var rules = new List<(IdentityReference, FileSystemRights, InheritanceFlags, PropagationFlags, AccessControlType)>();
+        var rules = new List<(IdentityReference, SysFileSystemRights, InheritanceFlags, PropagationFlags, AccessControlType)>();
         var authRules = security.GetAccessRules(true, false, typeof(SecurityIdentifier));
 
         foreach (FileSystemAccessRule rule in authRules)

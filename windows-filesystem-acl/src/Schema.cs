@@ -2,7 +2,6 @@
 // You may use, distribute and modify this code under the
 // terms of the MIT license.
 
-using System.Security.AccessControl;
 using System.Text.Json.Serialization;
 
 using Json.Schema.Generation;
@@ -45,31 +44,4 @@ public sealed class Schema
     [Nullable(false)]
     [Default(true)]
     public bool? Exist { get; set; }
-}
-
-[Title("Access Rule")]
-[Description("Represents a file system access control entry.")]
-[AdditionalProperties(false)]
-public sealed class AccessRule
-{
-    [Required]
-    [Description("The identity to which the rule applies. Can be specified as: username, domain\\username, or SID (S-1-5-...).")]
-    [Pattern(@"^(?:S-1-[0-59]-\d+(?:-\d+)*|[^\\]+\\[^\\]+|[^\\@]+)$")]
-    public string Identity { get; set; } = string.Empty;
-
-    [Required]
-    [Description("The file system rights granted or denied.")]
-    public FileSystemRights Rights { get; set; }
-
-    [Description("The inheritance flags that determine how the rule is inherited by child objects.")]
-    [Default("None")]
-    public InheritanceFlags InheritanceFlags { get; set; } = InheritanceFlags.None;
-
-    [Description("The propagation flags that determine how inheritance is propagated.")]
-    [Default("None")]
-    public PropagationFlags PropagationFlags { get; set; } = PropagationFlags.None;
-
-    [Required]
-    [Description("Whether the rule allows or denies access.")]
-    public AccessControlType AccessControlType { get; set; }
 }
