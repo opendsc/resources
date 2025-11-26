@@ -6,7 +6,7 @@ using System.Security.AccessControl;
 
 using Json.Schema.Generation;
 
-namespace OpenDsc.Resource.Windows.FileSystemAcl;
+namespace OpenDsc.Resource.Windows.FileSystem.Acl;
 
 [Title("Access Rule")]
 [Description("Represents a file system access control entry.")]

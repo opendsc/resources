@@ -2,7 +2,7 @@
 // You may use, distribute and modify this code under the
 // terms of the MIT license.
 
-namespace OpenDsc.Resource.Windows.FileSystemAcl;
+namespace OpenDsc.Resource.Windows.FileSystem.Acl;
 
 // This enum duplicates System.Security.AccessControl.FileSystemRights
 // to allow for JSON Schema generation with unique items constraint.

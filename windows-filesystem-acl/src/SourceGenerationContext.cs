@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 
 using OpenDsc.Resource.CommandLine;
 
-namespace OpenDsc.Resource.Windows.FileSystemAcl;
+namespace OpenDsc.Resource.Windows.FileSystem.Acl;
 
 [JsonSourceGenerationOptions(
     WriteIndented = false,

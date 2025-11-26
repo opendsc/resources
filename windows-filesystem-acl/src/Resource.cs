@@ -13,7 +13,7 @@ using Json.Schema.Generation;
 
 using SysFileSystemRights = System.Security.AccessControl.FileSystemRights;
 
-namespace OpenDsc.Resource.Windows.FileSystemAcl;
+namespace OpenDsc.Resource.Windows.FileSystem.Acl;
 
 [DscResource("OpenDsc.Windows.FileSystem/AccessControlList", Description = "Manage Windows file and directory permissions", Tags = ["windows", "filesystem", "acl", "permissions", "security"])]
 [ExitCode(0, Description = "Success")]
