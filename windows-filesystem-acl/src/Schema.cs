@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 using Json.Schema.Generation;
 
-namespace OpenDsc.Resource.Windows.FileSystemAcl;
+namespace OpenDsc.Resource.Windows.FileSystem.Acl;
 
 [Title("Windows File System Access Control List Schema")]
 [Description("Schema for managing Windows file and directory permissions via OpenDsc.")]

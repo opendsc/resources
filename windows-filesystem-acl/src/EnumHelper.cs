@@ -4,7 +4,7 @@
 
 using SysFileSystemRights = System.Security.AccessControl.FileSystemRights;
 
-namespace OpenDsc.Resource.Windows.FileSystemAcl;
+namespace OpenDsc.Resource.Windows.FileSystem.Acl;
 
 internal static class EnumHelper
 {
