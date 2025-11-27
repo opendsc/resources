@@ -1,11 +1,15 @@
 # OpenDsc.FileSystem/Directory Resource
 
-Manage directories using DSC v3.
+Manage directories using DSC v3, with support for seeding from a source.
+When `sourcePath` is specified, directory contents are compared using SHA256
+hashes to ensure all source files are present and match in the target.
+Extra files in the target are ignored.
 
 ## Capabilities
 
 - **Get**: Retrieve current state of a directory
-- **Set**: Create directory and parents recursively if needed
+- **Set**: Create directory; optionally copy contents from source
+- **Test**: Check if directory matches desired state
 - **Delete**: Remove a directory if it exists
 
 ## Requirements
@@ -31,7 +35,9 @@ manifest.
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | `path` | string | Yes | The path to the directory. |
-| `_exist` | boolean | No | Indicates whether the directory should exist. Default: `true`. Set to `false` to delete. |
+| `sourcePath` | string | No | Path to source directory to copy contents from. Contents are compared using SHA256 hashes. |
+| `_exist` | boolean | No | Indicates whether the directory should exist. Default: `true`. |
+| `_inDesiredState` | boolean | No | Read-only: Whether the directory is in desired state. |
 
 ## Examples
 
@@ -67,5 +73,28 @@ Ensure a directory is absent:
 dsc resource set -r OpenDsc.FileSystem/Directory --input '
 path: C:\temp\dir
 _exist: false
+'
+```
+
+### Create Directory with Source Contents
+
+Create a directory and copy all files/subdirectories from a source:
+
+```powershell
+dsc resource set -r OpenDsc.FileSystem/Directory --input '
+path: C:\temp\target
+sourcePath: C:\temp\source
+'
+```
+
+### Test Directory Compliance
+
+Check if directory matches desired state (all source files present and matching
+via SHA256 hashes; extra files ignored):
+
+```powershell
+dsc resource test -r OpenDsc.FileSystem/Directory --input '
+path: C:\temp\target
+sourcePath: C:\temp\source
 '
 ```

@@ -16,6 +16,7 @@ Describe 'directory' {
             $result.capabilities | Should -Contain 'get'
             $result.capabilities | Should -Contain 'set'
             $result.capabilities | Should -Contain 'delete'
+            $result.capabilities | Should -Contain 'test'
         }
 
         It 'should have a valid manifest' {
@@ -48,8 +49,6 @@ Describe 'directory' {
             $result = dsc resource get -r OpenDsc.FileSystem/Directory --input $inputJson | ConvertFrom-Json
             $result.actualState.path | Should -Be $testDir
             $result.actualState._exist | Should -BeNullOrEmpty
-
-            Remove-Item $testDir -Recurse
         }
     }
 
@@ -69,8 +68,6 @@ Describe 'directory' {
 
             $getResult = dsc resource get -r OpenDsc.FileSystem/Directory --input $verifyJson | ConvertFrom-Json
             $getResult.actualState._exist | Should -BeNullOrEmpty
-
-            Remove-Item $testDir -Recurse
         }
     }
 
@@ -91,11 +88,74 @@ Describe 'directory' {
 
             $getResult = dsc resource get -r OpenDsc.FileSystem/Directory --input $verifyJson | ConvertFrom-Json
             $getResult.actualState._exist | Should -Be $false
+        }
+    }
 
-            # Cleanup if it still exists
-            if (Test-Path $testDir) {
-                Remove-Item $testDir -Recurse
-            }
+    Context 'Test Operation' {
+        It 'should create directory and copy contents from source' {
+            $sourceDir = Join-Path $TestDrive 'SourceDir'
+            $targetDir = Join-Path $TestDrive 'TargetDir'
+
+            New-Item -ItemType Directory -Path $sourceDir | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $sourceDir 'SubDir') | Out-Null
+            'test content' | Out-File (Join-Path $sourceDir 'file1.txt')
+            'sub content' | Out-File (Join-Path $sourceDir 'SubDir\file2.txt')
+
+            $inputJson = @{
+                path = $targetDir
+                sourcePath = $sourceDir
+            } | ConvertTo-Json -Compress
+
+            dsc resource set -r OpenDsc.FileSystem/Directory --input $inputJson | Out-Null
+
+
+            Test-Path $targetDir | Should -Be $true
+            Test-Path (Join-Path $targetDir 'file1.txt') | Should -Be $true
+            Test-Path (Join-Path $targetDir 'SubDir') | Should -Be $true
+            Test-Path (Join-Path $targetDir 'SubDir\file2.txt') | Should -Be $true
+            Get-Content (Join-Path $targetDir 'file1.txt') | Should -Be 'test content'
+
+            $testResult = dsc resource test -r OpenDsc.FileSystem/Directory --input $inputJson | ConvertFrom-Json
+            $testResult.inDesiredState | Should -Be $true
+        }
+
+        It 'should return not in desired state if contents differ' {
+            $sourceDir = Join-Path $TestDrive 'SourceDir2'
+            $targetDir = Join-Path $TestDrive 'TargetDir2'
+
+            New-Item -ItemType Directory -Path $sourceDir | Out-Null
+            'original' | Out-File (Join-Path $sourceDir 'file.txt')
+
+            New-Item -ItemType Directory -Path $targetDir | Out-Null
+            'modified' | Out-File (Join-Path $targetDir 'file.txt')
+
+            $inputJson = @{
+                path = $targetDir
+                sourcePath = $sourceDir
+            } | ConvertTo-Json -Compress
+
+            $testResult = dsc resource test -r OpenDsc.FileSystem/Directory --input $inputJson | ConvertFrom-Json
+            $testResult.inDesiredState | Should -Be $false
+        }
+
+        It 'should return in desired state if target has extra files but source files match' {
+            $sourceDir = Join-Path $TestDrive 'SourceDir3'
+            $targetDir = Join-Path $TestDrive 'TargetDir3'
+
+            New-Item -ItemType Directory -Path $sourceDir | Out-Null
+            'content' | Out-File (Join-Path $sourceDir 'file.txt')
+
+            New-Item -ItemType Directory -Path $targetDir | Out-Null
+            'content' | Out-File (Join-Path $targetDir 'file.txt')
+            'extra' | Out-File (Join-Path $targetDir 'extra.txt')
+
+            $inputJson = @{
+                path = $targetDir
+                sourcePath = $sourceDir
+            } | ConvertTo-Json -Compress
+
+            $testResult = dsc resource test -r OpenDsc.FileSystem/Directory --input $inputJson | ConvertFrom-Json
+            $testResult.inDesiredState | Should -Be $true
         }
     }
 }
