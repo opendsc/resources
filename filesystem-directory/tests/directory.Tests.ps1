@@ -108,7 +108,6 @@ Describe 'directory' {
 
             dsc resource set -r OpenDsc.FileSystem/Directory --input $inputJson | Out-Null
 
-
             Test-Path $targetDir | Should -Be $true
             Test-Path (Join-Path $targetDir 'file1.txt') | Should -Be $true
             Test-Path (Join-Path $targetDir 'SubDir') | Should -Be $true
