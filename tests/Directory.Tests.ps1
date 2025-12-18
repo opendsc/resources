@@ -3,12 +3,10 @@ Describe 'Directory Resource' {
         # Determine executable path based on platform
         if ($IsWindows) {
             $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
-            $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.Windows\bin\$configuration\net9.0-windows\publish"
-            $exe = 'OpenDsc.Resource.Windows.exe'
+            $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.CommandLine.Windows\bin\$configuration\net9.0-windows\publish"
         } else {
             $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
             $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.Linux\bin\$configuration\net9.0\publish"
-            $exe = 'OpenDsc.Resource.Linux'
         }
 
         $env:Path += if ($IsWindows) { ";$publishPath" } else { ":$publishPath" }
@@ -20,7 +18,7 @@ Describe 'Directory Resource' {
             $result = dsc resource list $script:resourceType | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
             if ($result -is [array]) {
-                $result = $result | Where-Object { $_.type -eq $script:resourceType }
+                $result = $result | Where-Object { $_.type -eq $script:resourceType } | Select-Object -First 1
             }
             $result.type | Should -Be $script:resourceType
         }
@@ -37,7 +35,7 @@ Describe 'Directory Resource' {
         }
 
         It 'should have a valid manifest' {
-            $manifestPath = Join-Path $publishPath "OpenDsc.Resource.Windows.dsc.manifests.json"
+            $manifestPath = Join-Path $publishPath "OpenDsc.Resource.CommandLine.Windows.dsc.manifests.json"
             $manifestPath | Should -Exist
             $manifest = Get-Content $manifestPath | ConvertFrom-Json
             $dirManifest = $manifest.resources | Where-Object { $_.type -eq $script:resourceType }

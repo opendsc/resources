@@ -6,7 +6,7 @@ Describe 'Environment Resource' {
         }
 
         $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
-        $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.Windows\bin\$configuration\net9.0-windows\publish"
+        $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.CommandLine.Windows\bin\$configuration\net9.0-windows\publish"
         $env:Path += ";$publishPath"
         $script:resourceType = 'OpenDsc.Windows/Environment'
         $script:testVarName = "DscTestVar_$(Get-Random -Maximum 9999)"
@@ -23,7 +23,7 @@ Describe 'Environment Resource' {
             $result = dsc resource list $script:resourceType | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
             if ($result -is [array]) {
-                $result = $result | Where-Object { $_.type -eq $script:resourceType }
+                $result = $result | Where-Object { $_.type -eq $script:resourceType } | Select-Object -First 1
             }
             $result.type | Should -Be $script:resourceType
         }

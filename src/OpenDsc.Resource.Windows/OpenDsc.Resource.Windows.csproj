@@ -2,14 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0-windows</TargetFramework>
-    <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\OpenDsc.Resource.FileSystem\OpenDsc.Resource.FileSystem.csproj" />
-    <ProjectReference Include="..\OpenDsc.Resource.Xml\OpenDsc.Resource.Xml.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OpenDsc.Resource.CommandLine" />
@@ -17,9 +11,5 @@
     <PackageReference Include="System.DirectoryServices.AccountManagement" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
   </ItemGroup>
-
-  <Target Name="RunAfterPublish" AfterTargets="Publish">
-    <Exec Command="$(PublishDir)$(AssemblyName)$(ExeSuffix) manifest --save" />
-  </Target>
 
 </Project>

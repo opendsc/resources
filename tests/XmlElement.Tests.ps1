@@ -3,7 +3,7 @@ Describe 'XmlElement Resource' {
         # Determine executable path based on platform
         if ($IsWindows) {
             $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
-            $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.Windows\bin\$configuration\net9.0-windows\win-x64\publish"
+            $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.CommandLine.Windows\bin\$configuration\net9.0-windows\publish"
         } else {
             $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
             $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.Linux\bin\$configuration\net9.0\publish"
@@ -19,7 +19,7 @@ Describe 'XmlElement Resource' {
             $result = dsc resource list $script:resourceType | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
             if ($result -is [array]) {
-                $result = $result | Where-Object { $_.type -eq $script:resourceType }
+                $result = $result | Where-Object { $_.type -eq $script:resourceType } | Select-Object -First 1
             }
             $result.type | Should -Be $script:resourceType
         }
