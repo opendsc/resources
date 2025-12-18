@@ -11,6 +11,7 @@ namespace OpenDsc.Resource.FileSystem.File;
                              UseStringEnumConverter = true,
                              DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(IDscResource<Schema>))]
+[JsonSerializable(typeof(Schema))]
 [JsonSerializable(typeof(TestResult<Schema>))]
 [JsonSerializable(typeof(SetResult<Schema>))]
 internal partial class SourceGenerationContext : JsonSerializerContext
