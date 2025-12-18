@@ -21,7 +21,7 @@ namespace OpenDsc.Resource.Windows.Group;
 [ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument")]
 [ExitCode(6, Exception = typeof(UnauthorizedAccessException), Description = "Unauthorized access")]
 [ExitCode(7, Exception = typeof(PrincipalExistsException), Description = "Group already exists")]
-public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
+public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
 {
     public override string GetSchema()
     {

@@ -17,7 +17,7 @@ namespace OpenDsc.Resource.Windows.Shortcut;
 [ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
 [ExitCode(4, Exception = typeof(InvalidOperationException), Description = "Failed to generate schema")]
 [ExitCode(5, Exception = typeof(DirectoryNotFoundException), Description = "Directory not found")]
-public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>
+public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>
 {
     public override string GetSchema()
     {

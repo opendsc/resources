@@ -18,7 +18,7 @@ namespace OpenDsc.Resource.FileSystem.Directory;
 [ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument")]
 [ExitCode(6, Exception = typeof(IOException), Description = "IO error")]
 [ExitCode(7, Exception = typeof(UnauthorizedAccessException), Description = "Access denied")]
-public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, ITestable<Schema>
+public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, ITestable<Schema>
 {
     public Schema Get(Schema instance)
     {

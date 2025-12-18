@@ -24,7 +24,7 @@ namespace OpenDsc.Resource.Xml.Element;
 [ExitCode(6, Exception = typeof(XPathException), Description = "Invalid XPath expression")]
 [ExitCode(7, Exception = typeof(ArgumentException), Description = "Invalid argument")]
 [ExitCode(8, Exception = typeof(IOException), Description = "IO error")]
-public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>
+public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>
 {
     public override string GetSchema()
     {

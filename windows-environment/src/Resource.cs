@@ -20,7 +20,7 @@ using Environment = System.Environment;
 [ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
 [ExitCode(4, Exception = typeof(SecurityException), Description = "Access denied")]
 [ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument")]
-public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
+public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
 {
     public override string GetSchema()
     {

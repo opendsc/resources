@@ -2,12 +2,12 @@
 // You may use, distribute and modify this code under the
 // terms of the MIT license.
 
-using System.CommandLine;
-
 using OpenDsc.Resource.CommandLine;
 
 using OpenDsc.Resource.FileSystem.Directory;
 
 var resource = new Resource(SourceGenerationContext.Default);
-var command = CommandBuilder<Resource, Schema>.Build(resource, SourceGenerationContext.Default);
-return command.Invoke(args);
+var command = new CommandBuilder()
+    .AddResource<Resource, Schema>(resource)
+    .Build();
+return command.Parse(args).Invoke();

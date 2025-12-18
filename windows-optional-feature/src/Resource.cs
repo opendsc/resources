@@ -19,7 +19,7 @@ namespace OpenDsc.Resource.Windows.OptionalFeature;
 [ExitCode(4, Exception = typeof(SecurityException), Description = "Access denied - administrator privileges required")]
 [ExitCode(5, Exception = typeof(InvalidOperationException), Description = "DISM operation failed")]
 public sealed class Resource(JsonSerializerContext context)
-    : AotDscResource<Schema>(context),
+    : DscResource<Schema>(context),
       IGettable<Schema>,
       ISettable<Schema>,
       IDeletable<Schema>,

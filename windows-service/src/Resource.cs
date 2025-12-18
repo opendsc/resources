@@ -21,7 +21,7 @@ namespace OpenDsc.Resource.Windows.Service;
 [ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument or missing required parameter")]
 [ExitCode(6, Exception = typeof(InvalidOperationException), Description = "Invalid operation or service state")]
 [ExitCode(7, Exception = typeof(System.ServiceProcess.TimeoutException), Description = "Service operation timed out")]
-public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
+public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
 {
     private const int ServiceOperationTimeoutSeconds = 30;
 

@@ -26,7 +26,7 @@ namespace OpenDsc.Resource.Windows.FileSystem.Acl;
 [ExitCode(7, Exception = typeof(FileNotFoundException), Description = "File or directory not found")]
 [ExitCode(8, Exception = typeof(DirectoryNotFoundException), Description = "Directory not found")]
 [ExitCode(9, Exception = typeof(IdentityNotMappedException), Description = "Identity not found")]
-public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>
+public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>
 {
     public override string GetSchema()
     {
