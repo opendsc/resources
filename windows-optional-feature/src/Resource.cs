@@ -13,13 +13,13 @@ namespace OpenDsc.Resource.Windows.OptionalFeature;
 
 [DscResource("OpenDsc.Windows/OptionalFeature", Description = "Manage Windows optional features", Tags = ["windows", "feature", "dism"], SetReturn = SetReturn.State)]
 [ExitCode(0, Description = "Success")]
-[ExitCode(1, Description = "Invalid parameter")]
+[ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Description = "Feature not found")]
 [ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
 [ExitCode(4, Exception = typeof(SecurityException), Description = "Access denied - administrator privileges required")]
 [ExitCode(5, Exception = typeof(InvalidOperationException), Description = "DISM operation failed")]
 public sealed class Resource(JsonSerializerContext context)
-    : AotDscResource<Schema>(context),
+    : DscResource<Schema>(context),
       IGettable<Schema>,
       ISettable<Schema>,
       IDeletable<Schema>,

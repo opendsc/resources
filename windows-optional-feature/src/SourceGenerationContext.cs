@@ -3,7 +3,6 @@
 // terms of the MIT license.
 
 using System.Text.Json.Serialization;
-using OpenDsc.Resource.CommandLine;
 
 namespace OpenDsc.Resource.Windows.OptionalFeature;
 
@@ -11,10 +10,11 @@ namespace OpenDsc.Resource.Windows.OptionalFeature;
     WriteIndented = false,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     UseStringEnumConverter = true,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    Converters = [typeof(ResourceConverter<Schema>)])]
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(IDscResource<Schema>))]
 [JsonSerializable(typeof(Schema))]
+[JsonSerializable(typeof(TestResult<Schema>))]
+[JsonSerializable(typeof(SetResult<Schema>))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(RestartRequired))]
 [JsonSerializable(typeof(RestartRequired[]))]

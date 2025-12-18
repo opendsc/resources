@@ -10,13 +10,12 @@ namespace OpenDsc.Resource.FileSystem.File;
 
 [DscResource("OpenDsc.FileSystem/File", Description = "Manage files", Tags = new[] { "file", "filesystem" })]
 [ExitCode(0, Description = "Success")]
-[ExitCode(1, Description = "Invalid parameter")]
-[ExitCode(2, Exception = typeof(Exception), Description = "Generic error")]
-[ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
-[ExitCode(4, Exception = typeof(SecurityException), Description = "Access denied")]
-[ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument")]
-[ExitCode(6, Exception = typeof(IOException), Description = "IO error")]
-public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>
+[ExitCode(1, Exception = typeof(Exception), Description = "Error")]
+[ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]
+[ExitCode(3, Exception = typeof(SecurityException), Description = "Access denied")]
+[ExitCode(4, Exception = typeof(ArgumentException), Description = "Invalid argument")]
+[ExitCode(5, Exception = typeof(IOException), Description = "IO error")]
+public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>
 {
     public Schema Get(Schema instance)
     {

@@ -8,6 +8,18 @@ This repository contains DSC v3 (Desired State Configuration) resources for Wind
 - `windows-environment/` - Environment variable management
 - `windows-service/` - Windows service control
 - `windows-shortcut/` - Shortcut (.lnk) file management
+- `windows-group/` - Local Windows group management
+- `windows-user/` - Local Windows user accounts
+- `windows-optional-feature/` - Windows optional features via DISM
+- `windows-filesystem-acl/` - File system ACL management
+- `filesystem-file/` - Cross-platform file management
+- `filesystem-directory/` - Cross-platform directory management
+- `xml-element/` - XML element manipulation
+
+**Resource Naming Convention:**
+- Windows-specific: `OpenDsc.Windows/<Name>` (namespace: `OpenDsc.Resource.Windows.<Name>`)
+- Cross-platform: `OpenDsc.<Area>/<Name>` (namespace: `OpenDsc.Resource.<Area>.<Name>`)
+- Specialized: `OpenDsc.Xml/<Name>` (namespace: `OpenDsc.Resource.Xml.<Name>`)
 
 ## Architecture Pattern
 
@@ -30,16 +42,50 @@ Each resource is a self-contained .NET 9.0 console application with these core f
 
 ### Critical Inheritance Pattern
 
-All resources inherit from `AotDscResource<Schema>` and implement capability interfaces:
+All resources inherit from `DscResource<Schema>` and implement capability interfaces:
 
 ```csharp
 public sealed class Resource(JsonSerializerContext context)
-    : AotDscResource<Schema>(context),
+    : DscResource<Schema>(context),
       IGettable<Schema>,      // Read current state (optional, but recommended)
       ISettable<Schema>,      // Apply desired state (optional, but recommended)
       IDeletable<Schema>,     // Remove resource (optional, but recommended)
       IExportable<Schema>     // Export all instances (optional)
 ```
+
+**Program.cs Entry Point:**
+
+All resources use this standard entry point pattern:
+
+```csharp
+using OpenDsc.Resource.CommandLine;
+using OpenDsc.Resource.Windows.Environment;  // Update namespace to match your resource
+
+var resource = new Resource(SourceGenerationContext.Default);
+var command = new CommandBuilder()
+    .AddResource<Resource, Schema>(resource)
+    .Build();
+return command.Parse(args).Invoke();
+```
+
+**GetSchema() Method:**
+
+All resources must override `GetSchema()` to generate JSON schema:
+
+```csharp
+public override string GetSchema()
+{
+    var config = new SchemaGeneratorConfiguration()
+    {
+        PropertyNameResolver = PropertyNameResolvers.CamelCase
+    };
+
+    var builder = new JsonSchemaBuilder().FromType<Schema>(config);
+    builder.Schema("https://json-schema.org/draft/2020-12/schema");
+    var schema = builder.Build();
+
+    return JsonSerializer.Serialize(schema);
+}
 
 **Interface Contract (all interfaces are optional, implement those that make sense):**
 - `IGettable.Get(Schema)` → return current state
@@ -181,8 +227,22 @@ When `Set()` needs to communicate metadata (like restart requirements), it shoul
 ```csharp
 [DscResource("OpenDsc.Windows/MyResource", SetReturn = SetReturn.State)]
 public sealed class Resource(JsonSerializerContext context)
-    : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>
+    : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>
 {
+    public override string GetSchema()
+    {
+        var config = new SchemaGeneratorConfiguration()
+        {
+            PropertyNameResolver = PropertyNameResolvers.CamelCase
+        };
+
+        var builder = new JsonSchemaBuilder().FromType<Schema>(config);
+        builder.Schema("https://json-schema.org/draft/2020-12/schema");
+        var schema = builder.Build();
+
+        return JsonSerializer.Serialize(schema);
+    }
+
     public Schema Get(Schema instance)
     {
         // ... get current state
@@ -351,14 +411,15 @@ Every resource needs `SourceGenerationContext.cs`:
     WriteIndented = false,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     UseStringEnumConverter = true,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    Converters = [typeof(ResourceConverter<Schema>)])]
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(IDscResource<Schema>))]
 [JsonSerializable(typeof(Schema))]
+[JsonSerializable(typeof(TestResult<Schema>))]
+[JsonSerializable(typeof(SetResult<Schema>))]
 internal partial class SourceGenerationContext : JsonSerializerContext { }
 ```
 
-Pass this context to both `Resource` constructor and `CommandBuilder`.
+Pass this context to the `Resource` constructor.
 
 ### Error Handling with Exit Codes
 
@@ -485,8 +546,9 @@ Use `windows-environment` as the template - it's the simplest, most complete exa
      - Use `<TargetFramework>net9.0</TargetFramework>` for resources using only cross-platform APIs
 
 3. **Implement Resource class:**
-   - Inherit from `AotDscResource<Schema>` with context parameter
+   - Inherit from `DscResource<Schema>` with context parameter
    - Add `[DscResource("OpenDsc.Windows/<Name>")]` attribute
+   - Override `GetSchema()` method with standard implementation
    - Define `[ExitCode]` mappings for exceptions
    - Implement capability interfaces (all optional, but implement those that make sense):
      - `IGettable<Schema>` - return current state or `Exist = false`
@@ -539,8 +601,21 @@ Use `windows-environment` as the template - it's the simplest, most complete exa
 
 ## Key Files to Reference
 
-- **Template Resource:** `windows-environment/` (simplest implementation)
+- **Template Resource:** `windows-environment/` (simplest, most complete implementation)
+- **Complex Resource:** `windows-optional-feature/` (uses SetReturn.State, metadata, and restart handling)
+- **Collection Management:** `windows-group/` (demonstrates _purge pattern)
 - **COM Interop:** `windows-shortcut/src/ShortcutHelper.cs` (P/Invoke patterns)
-- **Service Control:** `windows-service/src/ServiceHelper.cs` (Win32 API wrappers)
-- **Test Examples:** `windows-environment/tests/*.Tests.ps1` (comprehensive test suite)
+- **Win32 API:** `windows-service/src/ServiceHelper.cs` (Win32 API wrappers)
+- **DISM API:** `windows-optional-feature/src/DismHelper.cs` (P/Invoke DISM interop)
+- **Test Examples:** `windows-environment/tests/*.Tests.ps1` (comprehensive integration tests)
 - **Editor Config:** `.editorconfig` (C# style rules, file headers)
+
+## Package Dependencies
+
+All resources depend on:
+- `OpenDsc.Resource.CommandLine` - Version 0.3.1 (provides DscResource base class, interfaces, and CLI framework)
+- `JsonSchema.Net.Generation` - Version 5.1.1 (JSON Schema generation attributes)
+
+Platform-specific dependencies:
+- `System.DirectoryServices.AccountManagement` - Built-in for user/group management
+- Windows COM/Win32 APIs - P/Invoke declarations for shortcut, service, and DISM operations

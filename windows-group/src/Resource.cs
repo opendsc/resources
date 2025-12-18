@@ -14,14 +14,13 @@ namespace OpenDsc.Resource.Windows.Group;
 
 [DscResource("OpenDsc.Windows/Group", Description = "Manage local Windows groups", Tags = ["windows", "group", "security"])]
 [ExitCode(0, Description = "Success")]
-[ExitCode(1, Description = "Invalid parameter")]
-[ExitCode(2, Exception = typeof(Exception), Description = "Generic error")]
-[ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
-[ExitCode(4, Exception = typeof(SecurityException), Description = "Access denied")]
-[ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument")]
-[ExitCode(6, Exception = typeof(UnauthorizedAccessException), Description = "Unauthorized access")]
-[ExitCode(7, Exception = typeof(PrincipalExistsException), Description = "Group already exists")]
-public sealed class Resource(JsonSerializerContext context) : AotDscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
+[ExitCode(1, Exception = typeof(Exception), Description = "Error")]
+[ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]
+[ExitCode(3, Exception = typeof(SecurityException), Description = "Access denied")]
+[ExitCode(4, Exception = typeof(ArgumentException), Description = "Invalid argument")]
+[ExitCode(5, Exception = typeof(UnauthorizedAccessException), Description = "Unauthorized access")]
+[ExitCode(6, Exception = typeof(PrincipalExistsException), Description = "Group already exists")]
+public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
 {
     public override string GetSchema()
     {
