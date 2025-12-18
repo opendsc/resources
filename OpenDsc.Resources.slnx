@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OpenDsc.Resource.FileSystem/OpenDsc.Resource.FileSystem.csproj" />
+    <Project Path="src/OpenDsc.Resource.Linux/OpenDsc.Resource.Linux.csproj" />
+    <Project Path="src/OpenDsc.Resource.Windows/OpenDsc.Resource.Windows.csproj" />
+    <Project Path="src/OpenDsc.Resource.Xml/OpenDsc.Resource.Xml.csproj" />
+  </Folder>
+</Solution>

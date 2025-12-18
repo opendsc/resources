@@ -12,10 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenDsc.Resource.CommandLine" Version="0.3.1" />
-    <PackageReference Include="JsonSchema.Net.Generation" Version="5.1.1" />
-    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.0" />
-    <PackageReference Include="System.ServiceProcess.ServiceController" Version="9.0.0" />
+    <PackageReference Include="OpenDsc.Resource.CommandLine" />
+    <PackageReference Include="JsonSchema.Net.Generation" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" />
   </ItemGroup>
 
   <Target Name="RunAfterPublish" AfterTargets="Publish">

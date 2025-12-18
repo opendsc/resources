@@ -46,34 +46,10 @@ $ErrorActionPreference = 'Stop'
 if (-not $SkipBuild) {
     Write-Host "Building OpenDsc resources..." -ForegroundColor Cyan
 
-    # Build area libraries first
-    Write-Host "Building FileSystem library..." -ForegroundColor Yellow
-    $fsProj = Get-ChildItem $PSScriptRoot\src\OpenDsc.Resource.FileSystem\*.csproj
-    dotnet publish $fsProj -c $Configuration
+    $sln = Get-ChildItem $PSScriptRoot\*.slnx
+    dotnet publish $sln -c $Configuration
     if ($LASTEXITCODE -ne 0) {
-        throw "FileSystem library build failed with exit code $LASTEXITCODE"
-    }
-
-    Write-Host "Building Xml library..." -ForegroundColor Yellow
-    $xmlProj = Get-ChildItem $PSScriptRoot\src\OpenDsc.Resource.Xml\*.csproj
-    dotnet publish $xmlProj -c $Configuration
-    if ($LASTEXITCODE -ne 0) {
-        throw "Xml library build failed with exit code $LASTEXITCODE"
-    }
-
-    # Build platform executables
-    Write-Host "Building Windows executable..." -ForegroundColor Yellow
-    $winProj = Get-ChildItem $PSScriptRoot\src\OpenDsc.Resource.Windows\*.csproj
-    dotnet publish $winProj -c $Configuration
-    if ($LASTEXITCODE -ne 0) {
-        throw "Windows executable build failed with exit code $LASTEXITCODE"
-    }
-
-    Write-Host "Building Linux executable..." -ForegroundColor Yellow
-    $linuxProj = Get-ChildItem $PSScriptRoot\src\OpenDsc.Resource.Linux\*.csproj
-    dotnet publish $linuxProj -c $Configuration
-    if ($LASTEXITCODE -ne 0) {
-        throw "Linux executable build failed with exit code $LASTEXITCODE"
+        throw "Build failed with exit code $LASTEXITCODE"
     }
 
     Write-Host "Build completed successfully!" -ForegroundColor Green
