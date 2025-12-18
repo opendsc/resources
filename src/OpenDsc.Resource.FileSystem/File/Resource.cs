@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 
 namespace OpenDsc.Resource.FileSystem.File;
 
-[DscResource("OpenDsc.FileSystem/File", Description = "Manage files", Tags = ["file", "filesystem"])]
+[DscResource("OpenDsc.FileSystem/File", "0.1.0", Description = "Manage files", Tags = ["file", "filesystem"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]

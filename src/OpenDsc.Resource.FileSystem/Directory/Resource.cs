@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 
 namespace OpenDsc.Resource.FileSystem.Directory;
 
-[DscResource("OpenDsc.FileSystem/Directory", Description = "Manage directories", Tags = ["directory", "filesystem"])]
+[DscResource("OpenDsc.FileSystem/Directory", "0.1.0", Description = "Manage directories", Tags = ["directory", "filesystem"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]

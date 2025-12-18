@@ -12,7 +12,7 @@ using Json.Schema.Generation;
 
 namespace OpenDsc.Resource.Windows.User;
 
-[DscResource("OpenDsc.Windows/User", Description = "Manage local Windows user accounts", Tags = ["windows", "user", "account"])]
+[DscResource("OpenDsc.Windows/User", "0.1.0", Description = "Manage local Windows user accounts", Tags = ["windows", "user", "account"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]

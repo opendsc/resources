@@ -13,7 +13,7 @@ namespace OpenDsc.Resource.Windows.Environment;
 
 using Environment = System.Environment;
 
-[DscResource("OpenDsc.Windows/Environment", Description = "Manage Windows environment variables", Tags = ["windows", "environment", "variable"])]
+[DscResource("OpenDsc.Windows/Environment", "0.1.0", Description = "Manage Windows environment variables", Tags = ["windows", "environment", "variable"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]

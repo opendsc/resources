@@ -10,7 +10,7 @@ using Json.Schema.Generation;
 
 namespace OpenDsc.Resource.Windows.Shortcut;
 
-[DscResource("OpenDsc.Windows/Shortcut", Description = "Manage Windows shortcuts", Tags = ["shortcut", "windows"])]
+[DscResource("OpenDsc.Windows/Shortcut", "0.1.0", Description = "Manage Windows shortcuts", Tags = ["shortcut", "windows"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]

@@ -14,7 +14,7 @@ using Json.Schema.Generation;
 
 namespace OpenDsc.Resource.Xml.Element;
 
-[DscResource("OpenDsc.Xml/Element", Description = "Manage XML element content and attributes", Tags = ["xml", "element", "attribute", "xpath"])]
+[DscResource("OpenDsc.Xml/Element", "0.1.0", Description = "Manage XML element content and attributes", Tags = ["xml", "element", "attribute", "xpath"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]

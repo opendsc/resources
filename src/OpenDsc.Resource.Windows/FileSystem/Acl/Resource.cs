@@ -15,7 +15,7 @@ using SysFileSystemRights = System.Security.AccessControl.FileSystemRights;
 
 namespace OpenDsc.Resource.Windows.FileSystem.Acl;
 
-[DscResource("OpenDsc.Windows.FileSystem/AccessControlList", Description = "Manage Windows file and directory permissions", Tags = ["windows", "filesystem", "acl", "permissions", "security"])]
+[DscResource("OpenDsc.Windows.FileSystem/AccessControlList", "0.1.0", Description = "Manage Windows file and directory permissions", Tags = ["windows", "filesystem", "acl", "permissions", "security"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]

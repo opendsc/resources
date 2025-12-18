@@ -11,7 +11,7 @@ using Json.Schema.Generation;
 
 namespace OpenDsc.Resource.Windows.OptionalFeature;
 
-[DscResource("OpenDsc.Windows/OptionalFeature", Description = "Manage Windows optional features", Tags = ["windows", "feature", "dism"], SetReturn = SetReturn.State)]
+[DscResource("OpenDsc.Windows/OptionalFeature", "0.1.0", Description = "Manage Windows optional features", Tags = ["windows", "feature", "dism"], SetReturn = SetReturn.State)]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Description = "Feature not found")]

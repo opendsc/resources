@@ -12,7 +12,7 @@ using Json.Schema.Generation;
 
 namespace OpenDsc.Resource.Windows.Group;
 
-[DscResource("OpenDsc.Windows/Group", Description = "Manage local Windows groups", Tags = ["windows", "group", "security"])]
+[DscResource("OpenDsc.Windows/Group", "0.1.0", Description = "Manage local Windows groups", Tags = ["windows", "group", "security"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]
