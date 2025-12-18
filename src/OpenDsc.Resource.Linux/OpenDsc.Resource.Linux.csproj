@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenDsc.Resource.FileSystem\OpenDsc.Resource.FileSystem.csproj" />
+    <ProjectReference Include="..\OpenDsc.Resource.Xml\OpenDsc.Resource.Xml.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenDsc.Resource.CommandLine" Version="0.3.1" />
+    <PackageReference Include="JsonSchema.Net.Generation" Version="5.1.1" />
+  </ItemGroup>
+
+  <Target Name="RunAfterPublish" AfterTargets="Publish">
+    <Exec Command="$(PublishDir)$(AssemblyName) manifest --save" />
+  </Target>
+
+</Project>
