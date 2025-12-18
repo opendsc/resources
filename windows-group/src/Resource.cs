@@ -204,7 +204,7 @@ public sealed class Resource(JsonSerializerContext context) : DscResource<Schema
 
     private static Principal AddMember(PrincipalContext context, GroupPrincipal group, string memberName)
     {
-        Principal? member = null;
+        Principal? member;
 
         if (memberName.StartsWith("S-", StringComparison.OrdinalIgnoreCase))
         {
@@ -243,7 +243,7 @@ public sealed class Resource(JsonSerializerContext context) : DscResource<Schema
 
     private static Principal? RemoveMember(PrincipalContext context, GroupPrincipal group, string memberName)
     {
-        Principal? member = null;
+        Principal? member;
 
         if (memberName.StartsWith("S-", StringComparison.OrdinalIgnoreCase))
         {
