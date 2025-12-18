@@ -15,11 +15,10 @@ using Environment = System.Environment;
 
 [DscResource("OpenDsc.Windows/Environment", Description = "Manage Windows environment variables", Tags = ["windows", "environment", "variable"])]
 [ExitCode(0, Description = "Success")]
-[ExitCode(1, Description = "Invalid parameter")]
-[ExitCode(2, Exception = typeof(Exception), Description = "Generic error")]
-[ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
-[ExitCode(4, Exception = typeof(SecurityException), Description = "Access denied")]
-[ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument")]
+[ExitCode(1, Exception = typeof(Exception), Description = "Error")]
+[ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]
+[ExitCode(3, Exception = typeof(SecurityException), Description = "Access denied")]
+[ExitCode(4, Exception = typeof(ArgumentException), Description = "Invalid argument")]
 public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
 {
     public override string GetSchema()

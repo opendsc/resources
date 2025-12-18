@@ -16,14 +16,13 @@ namespace OpenDsc.Resource.Xml.Element;
 
 [DscResource("OpenDsc.Xml/Element", Description = "Manage XML element content and attributes", Tags = ["xml", "element", "attribute", "xpath"])]
 [ExitCode(0, Description = "Success")]
-[ExitCode(1, Description = "Invalid parameter")]
-[ExitCode(2, Exception = typeof(Exception), Description = "Generic error")]
-[ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
-[ExitCode(4, Exception = typeof(FileNotFoundException), Description = "XML file not found")]
-[ExitCode(5, Exception = typeof(XmlException), Description = "Invalid XML")]
-[ExitCode(6, Exception = typeof(XPathException), Description = "Invalid XPath expression")]
-[ExitCode(7, Exception = typeof(ArgumentException), Description = "Invalid argument")]
-[ExitCode(8, Exception = typeof(IOException), Description = "IO error")]
+[ExitCode(1, Exception = typeof(Exception), Description = "Error")]
+[ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]
+[ExitCode(3, Exception = typeof(FileNotFoundException), Description = "XML file not found")]
+[ExitCode(4, Exception = typeof(XmlException), Description = "Invalid XML")]
+[ExitCode(5, Exception = typeof(XPathException), Description = "Invalid XPath expression")]
+[ExitCode(6, Exception = typeof(ArgumentException), Description = "Invalid argument")]
+[ExitCode(7, Exception = typeof(IOException), Description = "IO error")]
 public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>
 {
     public override string GetSchema()

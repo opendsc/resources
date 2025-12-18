@@ -17,15 +17,14 @@ namespace OpenDsc.Resource.Windows.FileSystem.Acl;
 
 [DscResource("OpenDsc.Windows.FileSystem/AccessControlList", Description = "Manage Windows file and directory permissions", Tags = ["windows", "filesystem", "acl", "permissions", "security"])]
 [ExitCode(0, Description = "Success")]
-[ExitCode(1, Description = "Invalid parameter")]
-[ExitCode(2, Exception = typeof(Exception), Description = "Generic error")]
-[ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
-[ExitCode(4, Exception = typeof(SecurityException), Description = "Access denied")]
-[ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument")]
-[ExitCode(6, Exception = typeof(UnauthorizedAccessException), Description = "Unauthorized access")]
-[ExitCode(7, Exception = typeof(FileNotFoundException), Description = "File or directory not found")]
-[ExitCode(8, Exception = typeof(DirectoryNotFoundException), Description = "Directory not found")]
-[ExitCode(9, Exception = typeof(IdentityNotMappedException), Description = "Identity not found")]
+[ExitCode(1, Exception = typeof(Exception), Description = "Error")]
+[ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]
+[ExitCode(3, Exception = typeof(SecurityException), Description = "Access denied")]
+[ExitCode(4, Exception = typeof(ArgumentException), Description = "Invalid argument")]
+[ExitCode(5, Exception = typeof(UnauthorizedAccessException), Description = "Unauthorized access")]
+[ExitCode(6, Exception = typeof(FileNotFoundException), Description = "File or directory not found")]
+[ExitCode(7, Exception = typeof(DirectoryNotFoundException), Description = "Directory not found")]
+[ExitCode(8, Exception = typeof(IdentityNotMappedException), Description = "Identity not found")]
 public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>
 {
     public override string GetSchema()

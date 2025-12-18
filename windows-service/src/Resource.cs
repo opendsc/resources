@@ -14,13 +14,12 @@ namespace OpenDsc.Resource.Windows.Service;
 
 [DscResource("OpenDsc.Windows/Service", Description = "Manage Windows services.", Tags = ["windows", "service"])]
 [ExitCode(0, Description = "Success")]
-[ExitCode(1, Description = "Invalid parameter")]
-[ExitCode(2, Exception = typeof(Exception), Description = "Generic error")]
-[ExitCode(3, Exception = typeof(JsonException), Description = "Invalid JSON")]
-[ExitCode(4, Exception = typeof(Win32Exception), Description = "Windows API error")]
-[ExitCode(5, Exception = typeof(ArgumentException), Description = "Invalid argument or missing required parameter")]
-[ExitCode(6, Exception = typeof(InvalidOperationException), Description = "Invalid operation or service state")]
-[ExitCode(7, Exception = typeof(System.ServiceProcess.TimeoutException), Description = "Service operation timed out")]
+[ExitCode(1, Exception = typeof(Exception), Description = "Error")]
+[ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]
+[ExitCode(3, Exception = typeof(Win32Exception), Description = "Windows API error")]
+[ExitCode(4, Exception = typeof(ArgumentException), Description = "Invalid argument or missing required parameter")]
+[ExitCode(5, Exception = typeof(InvalidOperationException), Description = "Invalid operation or service state")]
+[ExitCode(6, Exception = typeof(System.ServiceProcess.TimeoutException), Description = "Service operation timed out")]
 public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, IExportable<Schema>
 {
     private const int ServiceOperationTimeoutSeconds = 30;
