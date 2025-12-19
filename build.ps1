@@ -46,10 +46,34 @@ $ErrorActionPreference = 'Stop'
 if (-not $SkipBuild) {
     Write-Host "Building OpenDsc resources..." -ForegroundColor Cyan
 
-    $sln = Get-ChildItem $PSScriptRoot\*.slnx
-    dotnet publish $sln -c $Configuration
-    if ($LASTEXITCODE -ne 0) {
-        throw "Build failed with exit code $LASTEXITCODE"
+    $publishDir = Join-Path $PSScriptRoot "publish"
+    New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
+
+    if ($IsWindows) {
+        $windowsProj = Join-Path $PSScriptRoot "src\OpenDsc.Resource.CommandLine.Windows\OpenDsc.Resource.CommandLine.Windows.csproj"
+        if (Test-Path $windowsProj) {
+            dotnet publish $windowsProj -c $Configuration -o $publishDir
+            if ($LASTEXITCODE -ne 0) {
+                throw "Build failed for OpenDsc.Resource.CommandLine.Windows with exit code $LASTEXITCODE"
+            }
+        }
+
+        Write-Host "Building TestService..." -ForegroundColor Cyan
+        $testServiceProj = Join-Path $PSScriptRoot "tests\TestService\TestService.csproj"
+        if (Test-Path $testServiceProj) {
+            dotnet publish $testServiceProj -c $Configuration
+            if ($LASTEXITCODE -ne 0) {
+                throw "Build failed for TestService with exit code $LASTEXITCODE"
+            }
+        }
+    } else {
+        $linuxProj = Join-Path $PSScriptRoot "src\OpenDsc.Resource.CommandLine.Linux\OpenDsc.Resource.CommandLine.Linux.csproj"
+        if (Test-Path $linuxProj) {
+            dotnet publish $linuxProj -c $Configuration -o $publishDir
+            if ($LASTEXITCODE -ne 0) {
+                throw "Build failed for OpenDsc.Resource.CommandLine.Linux with exit code $LASTEXITCODE"
+            }
+        }
     }
 
     Write-Host "Build completed successfully!" -ForegroundColor Green
@@ -101,14 +125,10 @@ if ($InstallDsc) {
 }
 
 if (-not $IsWindows) {
-    $testExecutables = @(
-        "src/OpenDsc.Resource.Windows/bin/$Configuration/net9.0-windows/win-x64/publish/OpenDsc.Resource.Windows.exe",
-        "src/OpenDsc.Resource.Linux/bin/$Configuration/net9.0/linux-x64/publish/OpenDsc.Resource.Linux"
-    )
+    $publishDir = Join-Path $PSScriptRoot "publish"
+    $testExecutables = Get-ChildItem -Path $publishDir -Filter "OpenDsc.Resource.*" -File | Where-Object { $_.Extension -in @('', '.exe') }
     foreach ($exe in $testExecutables) {
-        if (Test-Path $exe) {
-            chmod +x $exe
-        }
+        chmod +x $exe.FullName
     }
 }
 
@@ -117,7 +137,12 @@ if ($SkipTest) {
 }
 
 $env:BUILD_CONFIGURATION = $Configuration
+
+$publishDir = Join-Path $PSScriptRoot "publish"
+if (Test-Path $publishDir) {
+    $env:DSC_RESOURCE_PATH = $publishDir
+}
+
 Write-Host "Running tests..." -ForegroundColor Cyan
 $testsPath = Join-Path $PSScriptRoot 'tests'
 Invoke-Pester -Path $testsPath
-

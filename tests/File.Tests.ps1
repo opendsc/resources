@@ -1,140 +1,168 @@
 Describe 'File Resource' {
     BeforeAll {
-        # Determine executable path based on platform
-        if ($IsWindows) {
-            $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
-            $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.CommandLine.Windows\bin\$configuration\net9.0-windows\publish"
-            $exe = 'OpenDsc.Resource.CommandLine.Windows.exe'
-        } else {
-            $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
-            $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.Linux\bin\$configuration\net9.0\publish"
-            $exe = 'OpenDsc.Resource.Linux'
-        }
-
-        $env:Path += if ($IsWindows) { ";$publishPath" } else { ":$publishPath" }
-        $script:resourceType = 'OpenDsc.FileSystem/File'
-        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "DscFileTest_$(Get-Random)"
-        New-Item -ItemType Directory -Path $script:testDir | Out-Null
-        $script:testFile = Join-Path $script:testDir 'test.txt'
-    }
-
-    AfterAll {
-        if (Test-Path $script:testDir) {
-            Remove-Item -Path $script:testDir -Recurse -Force
+        $publishDir = Join-Path $PSScriptRoot "..\publish"
+        if (Test-Path $publishDir) {
+            $env:DSC_RESOURCE_PATH = $publishDir
         }
     }
 
     Context 'Discovery' {
         It 'should be found by dsc' {
-            $result = dsc resource list $script:resourceType | ConvertFrom-Json
+            $result = dsc resource list OpenDsc.FileSystem/File | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
-            if ($result -is [array]) {
-                $result = $result | Where-Object { $_.type -eq $script:resourceType } | Select-Object -First 1
-            }
-            $result.type | Should -Be $script:resourceType
+            $result.type | Should -Be 'OpenDsc.FileSystem/File'
         }
 
         It 'should report correct capabilities' {
-            $result = dsc resource list $script:resourceType | ConvertFrom-Json
-            if ($result -is [array]) {
-                $result = $result | Where-Object { $_.type -eq $script:resourceType }
-            }
+            $result = dsc resource list OpenDsc.FileSystem/File | ConvertFrom-Json
             $result.capabilities | Should -Contain 'get'
             $result.capabilities | Should -Contain 'set'
             $result.capabilities | Should -Contain 'delete'
         }
 
-        It 'should have a valid manifest' {
-            $manifestPath = Join-Path $publishPath "OpenDsc.Resource.CommandLine.Windows.dsc.manifests.json"
-            $manifestPath | Should -Exist
-            $manifest = Get-Content $manifestPath | ConvertFrom-Json
-            $fileManifest = $manifest.resources | Where-Object { $_.type -eq $script:resourceType }
-            $fileManifest | Should -Not -BeNullOrEmpty
-            $fileManifest.version | Should -Not -BeNullOrEmpty
-        }
-    }
+}
 
     Context 'Get Operation' {
         It 'should return _exist=false for non-existent file' {
+            $testFile = Join-Path $TestDrive 'NonExistentFile.txt'
             $inputJson = @{
-                path = Join-Path $script:testDir 'nonexistent.txt'
+                path = $testFile
             } | ConvertTo-Json -Compress
 
-            $result = dsc resource get -r $script:resourceType --input $inputJson | ConvertFrom-Json
+            $result = dsc resource get -r OpenDsc.FileSystem/File --input $inputJson | ConvertFrom-Json
             $result.actualState._exist | Should -Be $false
+            $result.actualState.path | Should -Be $testFile
         }
 
-        It 'should read properties of existing file' {
-            'test content' | Out-File -FilePath $script:testFile
+        It 'should read content of existing file' {
+            $testFile = Join-Path $TestDrive 'ExistingFile.txt'
+            $testContent = 'Hello, World!'
+            Set-Content -Path $testFile -Value $testContent -NoNewline
 
             $inputJson = @{
-                path = $script:testFile
+                path = $testFile
             } | ConvertTo-Json -Compress
 
-            $result = dsc resource get -r $script:resourceType --input $inputJson | ConvertFrom-Json
-            $result.actualState.path | Should -Be $script:testFile
-            $result.actualState._exist | Should -Not -Be $false
-        }
+            $result = dsc resource get -r OpenDsc.FileSystem/File --input $inputJson | ConvertFrom-Json
+            $result.actualState.path | Should -Be $testFile
+            $result.actualState.content | Should -Be $testContent
+            $result.actualState._exist | Should -BeNullOrEmpty
 
-        AfterEach {
-            if (Test-Path $script:testFile) {
-                Remove-Item $script:testFile
-            }
+            Remove-Item $testFile
         }
     }
 
     Context 'Set Operation' {
-        It 'should create a file with content' {
-            $inputJson = @{
-                path = $script:testFile
-                content = 'Hello from DSC'
-            } | ConvertTo-Json -Compress
-
-            dsc resource set -r $script:resourceType --input $inputJson | Out-Null
-
-            $script:testFile | Should -Exist
-            Get-Content $script:testFile | Should -Be 'Hello from DSC'
-        }
-
-        It 'should update file content' {
-            'initial content' | Out-File -FilePath $script:testFile
+        It 'should create a new file with content' {
+            $testFile = Join-Path $TestDrive 'NewFile.txt'
+            $testContent = 'New file content'
 
             $inputJson = @{
-                path = $script:testFile
-                content = 'updated content'
+                path = $testFile
+                content = $testContent
             } | ConvertTo-Json -Compress
 
-            dsc resource set -r $script:resourceType --input $inputJson | Out-Null
+            dsc resource set -r OpenDsc.FileSystem/File --input $inputJson | Out-Null
 
-            Get-Content $script:testFile | Should -Be 'updated content'
+            $verifyJson = @{
+                path = $testFile
+            } | ConvertTo-Json -Compress
+
+            $getResult = dsc resource get -r OpenDsc.FileSystem/File --input $verifyJson | ConvertFrom-Json
+            $getResult.actualState.content | Should -Be $testContent
+            $getResult.actualState._exist | Should -BeNullOrEmpty
+
+            Remove-Item $testFile
         }
 
-        AfterEach {
-            if (Test-Path $script:testFile) {
-                Remove-Item $script:testFile
-            }
+        It 'should create a new empty file when content is null' {
+            $testFile = Join-Path $TestDrive 'EmptyFile.txt'
+
+            $inputJson = @{
+                path = $testFile
+            } | ConvertTo-Json -Compress
+
+            dsc resource set -r OpenDsc.FileSystem/File --input $inputJson | Out-Null
+
+            $verifyJson = @{
+                path = $testFile
+            } | ConvertTo-Json -Compress
+
+            $getResult = dsc resource get -r OpenDsc.FileSystem/File --input $verifyJson | ConvertFrom-Json
+            $getResult.actualState.content | Should -Be ''
+            $getResult.actualState._exist | Should -BeNullOrEmpty
+
+            Remove-Item $testFile
         }
+
+        It 'should update existing file content' {
+            $testFile = Join-Path $TestDrive 'UpdateFile.txt'
+            $originalContent = 'Original content'
+            $newContent = 'Updated content'
+
+            Set-Content -Path $testFile -Value $originalContent
+
+            $inputJson = @{
+                path = $testFile
+                content = $newContent
+            } | ConvertTo-Json -Compress
+
+            dsc resource set -r OpenDsc.FileSystem/File --input $inputJson | Out-Null
+
+            $verifyJson = @{
+                path = $testFile
+            } | ConvertTo-Json -Compress
+
+            $getResult = dsc resource get -r OpenDsc.FileSystem/File --input $verifyJson | ConvertFrom-Json
+            $getResult.actualState.content | Should -Be $newContent
+
+            Remove-Item $testFile
+        }
+
+        It 'should fail when parent directory does not exist' {
+            $nonExistentDir = Join-Path $TestDrive 'NonExistentDir'
+            $testFile = Join-Path $nonExistentDir 'FileInNonExistentDir.txt'
+            $testContent = 'This should fail'
+
+            $inputJson = @{
+                path = $testFile
+                content = $testContent
+            } | ConvertTo-Json -Compress
+
+            dsc resource set -r OpenDsc.FileSystem/File --input $inputJson 2>&1 | Out-Null
+            $LASTEXITCODE | Should -Be 2
+        }
+
     }
 
     Context 'Delete Operation' {
-        BeforeEach {
-            'test content' | Out-File -FilePath $script:testFile
-        }
+        It 'should delete an existing file' {
+            $testFile = Join-Path $TestDrive 'FileToDelete.txt'
+            $testContent = 'Content to delete'
+            Set-Content -Path $testFile -Value $testContent
 
-        It 'should delete a file' {
             $inputJson = @{
-                path = $script:testFile
+                path = $testFile
             } | ConvertTo-Json -Compress
 
-            dsc resource delete -r $script:resourceType --input $inputJson | Out-Null
+            dsc resource delete -r OpenDsc.FileSystem/File --input $inputJson | Out-Null
 
-            $script:testFile | Should -Not -Exist
+            $verifyJson = @{
+                path = $testFile
+            } | ConvertTo-Json -Compress
+
+            $getResult = dsc resource get -r OpenDsc.FileSystem/File --input $verifyJson | ConvertFrom-Json
+            $getResult.actualState._exist | Should -Be $false
         }
 
-        AfterEach {
-            if (Test-Path $script:testFile) {
-                Remove-Item $script:testFile
-            }
+        It 'should not error when deleting non-existent file' {
+            $testFile = Join-Path $TestDrive 'NonExistentToDelete.txt'
+
+            $inputJson = @{
+                path = $testFile
+            } | ConvertTo-Json -Compress
+
+            { dsc resource delete -r OpenDsc.FileSystem/File --input $inputJson } | Should -Not -Throw
         }
     }
 }

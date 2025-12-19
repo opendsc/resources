@@ -9,6 +9,8 @@
     <PackageVersion Include="JsonSchema.Net.Generation" Version="5.1.1" />
     <PackageVersion Include="System.DirectoryServices.AccountManagement" Version="9.0.0" />
     <PackageVersion Include="System.ServiceProcess.ServiceController" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.0" />
   </ItemGroup>
 
 </Project>

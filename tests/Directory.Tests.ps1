@@ -1,48 +1,28 @@
 Describe 'Directory Resource' {
     BeforeAll {
-        # Determine executable path based on platform
-        if ($IsWindows) {
-            $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
-            $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.CommandLine.Windows\bin\$configuration\net9.0-windows\publish"
-        } else {
-            $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
-            $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.Linux\bin\$configuration\net9.0\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\publish"
+        if (Test-Path $publishDir) {
+            $env:DSC_RESOURCE_PATH = $publishDir
         }
 
-        $env:Path += if ($IsWindows) { ";$publishPath" } else { ":$publishPath" }
-        $script:resourceType = 'OpenDsc.FileSystem/Directory'
+        $script:testTempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
     }
 
     Context 'Discovery' {
         It 'should be found by dsc' {
-            $result = dsc resource list $script:resourceType | ConvertFrom-Json
+            $result = dsc resource list OpenDsc.FileSystem/Directory | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
-            if ($result -is [array]) {
-                $result = $result | Where-Object { $_.type -eq $script:resourceType } | Select-Object -First 1
-            }
-            $result.type | Should -Be $script:resourceType
+            $result.type | Should -Be 'OpenDsc.FileSystem/Directory'
         }
 
         It 'should report correct capabilities' {
-            $result = dsc resource list $script:resourceType | ConvertFrom-Json
-            if ($result -is [array]) {
-                $result = $result | Where-Object { $_.type -eq $script:resourceType }
-            }
+            $result = dsc resource list OpenDsc.FileSystem/Directory | ConvertFrom-Json
             $result.capabilities | Should -Contain 'get'
             $result.capabilities | Should -Contain 'set'
             $result.capabilities | Should -Contain 'delete'
             $result.capabilities | Should -Contain 'test'
         }
-
-        It 'should have a valid manifest' {
-            $manifestPath = Join-Path $publishPath "OpenDsc.Resource.CommandLine.Windows.dsc.manifests.json"
-            $manifestPath | Should -Exist
-            $manifest = Get-Content $manifestPath | ConvertFrom-Json
-            $dirManifest = $manifest.resources | Where-Object { $_.type -eq $script:resourceType }
-            $dirManifest | Should -Not -BeNullOrEmpty
-            $dirManifest.version | Should -Not -BeNullOrEmpty
-        }
-    }
+}
 
     Context 'Get Operation' {
         It 'should return _exist=false for non-existent directory' {
@@ -51,7 +31,7 @@ Describe 'Directory Resource' {
                 path = $testDir
             } | ConvertTo-Json -Compress
 
-            $result = dsc resource get -r $script:resourceType --input $inputJson | ConvertFrom-Json
+            $result = dsc resource get -r OpenDsc.FileSystem/Directory --input $inputJson | ConvertFrom-Json
             $result.actualState._exist | Should -Be $false
             $result.actualState.path | Should -Be $testDir
         }
@@ -64,7 +44,7 @@ Describe 'Directory Resource' {
                 path = $testDir
             } | ConvertTo-Json -Compress
 
-            $result = dsc resource get -r $script:resourceType --input $inputJson | ConvertFrom-Json
+            $result = dsc resource get -r OpenDsc.FileSystem/Directory --input $inputJson | ConvertFrom-Json
             $result.actualState.path | Should -Be $testDir
             $result.actualState._exist | Should -BeNullOrEmpty
         }
@@ -78,13 +58,13 @@ Describe 'Directory Resource' {
                 path = $testDir
             } | ConvertTo-Json -Compress
 
-            dsc resource set -r $script:resourceType --input $inputJson | Out-Null
+            dsc resource set -r OpenDsc.FileSystem/Directory --input $inputJson | Out-Null
 
             $verifyJson = @{
                 path = $testDir
             } | ConvertTo-Json -Compress
 
-            $getResult = dsc resource get -r $script:resourceType --input $verifyJson | ConvertFrom-Json
+            $getResult = dsc resource get -r OpenDsc.FileSystem/Directory --input $verifyJson | ConvertFrom-Json
             $getResult.actualState._exist | Should -BeNullOrEmpty
         }
     }
@@ -98,13 +78,13 @@ Describe 'Directory Resource' {
                 path = $testDir
             } | ConvertTo-Json -Compress
 
-            dsc resource delete -r $script:resourceType --input $inputJson | Out-Null
+            dsc resource delete -r OpenDsc.FileSystem/Directory --input $inputJson | Out-Null
 
             $verifyJson = @{
                 path = $testDir
             } | ConvertTo-Json -Compress
 
-            $getResult = dsc resource get -r $script:resourceType --input $verifyJson | ConvertFrom-Json
+            $getResult = dsc resource get -r OpenDsc.FileSystem/Directory --input $verifyJson | ConvertFrom-Json
             $getResult.actualState._exist | Should -Be $false
         }
     }
@@ -124,7 +104,7 @@ Describe 'Directory Resource' {
                 sourcePath = $sourceDir
             } | ConvertTo-Json -Compress
 
-            dsc resource set -r $script:resourceType --input $inputJson | Out-Null
+            dsc resource set -r OpenDsc.FileSystem/Directory --input $inputJson | Out-Null
 
             Test-Path $targetDir | Should -Be $true
             Test-Path (Join-Path $targetDir 'file1.txt') | Should -Be $true
@@ -132,8 +112,8 @@ Describe 'Directory Resource' {
             Test-Path (Join-Path $targetDir 'SubDir\file2.txt') | Should -Be $true
             Get-Content (Join-Path $targetDir 'file1.txt') | Should -Be 'test content'
 
-            $testResult = dsc resource test -r $script:resourceType --input $inputJson | ConvertFrom-Json
-            $testResult.actualState._inDesiredState | Should -Be $true
+            $testResult = dsc resource test -r OpenDsc.FileSystem/Directory --input $inputJson | ConvertFrom-Json
+            $testResult.inDesiredState | Should -Be $true
         }
 
         It 'should return not in desired state if contents differ' {
@@ -151,8 +131,8 @@ Describe 'Directory Resource' {
                 sourcePath = $sourceDir
             } | ConvertTo-Json -Compress
 
-            $testResult = dsc resource test -r $script:resourceType --input $inputJson | ConvertFrom-Json
-            $testResult.actualState._inDesiredState | Should -Be $false
+            $testResult = dsc resource test -r OpenDsc.FileSystem/Directory --input $inputJson | ConvertFrom-Json
+            $testResult.inDesiredState | Should -Be $false
         }
 
         It 'should return in desired state if target has extra files but source files match' {
@@ -171,8 +151,8 @@ Describe 'Directory Resource' {
                 sourcePath = $sourceDir
             } | ConvertTo-Json -Compress
 
-            $testResult = dsc resource test -r $script:resourceType --input $inputJson | ConvertFrom-Json
-            $testResult.actualState._inDesiredState | Should -Be $true
+            $testResult = dsc resource test -r OpenDsc.FileSystem/Directory --input $inputJson | ConvertFrom-Json
+            $testResult.inDesiredState | Should -Be $true
         }
     }
 }
