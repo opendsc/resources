@@ -12,7 +12,7 @@ using Json.Schema.Generation;
 
 namespace OpenDsc.Resource.Windows.Service;
 
-[DscResource("OpenDsc.Windows/Service", "0.1.0", Description = "Manage Windows services.", Tags = ["windows", "service"])]
+[DscResource("OpenDsc.Windows/Service", "0.1.0", Description = "Manage Windows services", Tags = ["windows", "service"])]
 [ExitCode(0, Description = "Success")]
 [ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 [ExitCode(2, Exception = typeof(JsonException), Description = "Invalid JSON")]
