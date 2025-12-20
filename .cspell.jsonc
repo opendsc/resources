@@ -1,22 +1,28 @@
 {
     "words": [
         "advapi",
+        "ansicpg",
         "CIFS",
+        "Consolas",
         "DATAW",
+        "deflang",
         "DISM",
         "dismapi",
         "Dnscache",
         "FILETIME",
+        "fonttbl",
         "jdoe",
         "LASTEXITCODE",
         "lpdw",
         "netstandard",
         "netsvcs",
         "Nieto",
+        "nouicompat",
         "olduser",
         "pidl",
         "ppidl",
         "ppsz",
+        "slmult",
         "Srvs",
         "STGM",
         "svcaccount",
@@ -25,6 +31,9 @@
         "Tcpip",
         "tempuser",
         "Trimmable",
+        "viewkind",
+        "wixext",
+        "wixproj",
         "wuauserv"
     ]
 }

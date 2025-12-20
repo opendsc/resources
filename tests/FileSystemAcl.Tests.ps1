@@ -2,7 +2,7 @@ $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIden
 
 Describe 'Windows FileSystem ACL Resource' -Skip:(!$IsWindows) {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot "..\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }

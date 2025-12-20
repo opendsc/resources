@@ -26,6 +26,12 @@
 .EXAMPLE
     .\build.ps1 -InstallDsc
     Installs DSC CLI and runs all tests.
+.EXAMPLE
+    .\build.ps1 -Portable
+    Builds a self-contained portable version with embedded .NET runtime.
+.EXAMPLE
+    .\build.ps1 -Msi
+    Builds the MSI installer package.
 #>
 [CmdletBinding()]
 param(
@@ -38,6 +44,10 @@ param(
 
     [switch]$InstallDsc,
 
+    [switch]$Portable,
+
+    [switch]$Msi,
+
     [string]$GitHubToken
 )
 
@@ -46,7 +56,7 @@ $ErrorActionPreference = 'Stop'
 if (-not $SkipBuild) {
     Write-Host "Building OpenDsc resources..." -ForegroundColor Cyan
 
-    $publishDir = Join-Path $PSScriptRoot "publish"
+    $publishDir = Join-Path $PSScriptRoot "artifacts\publish"
     New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 
     if ($IsWindows) {
@@ -55,6 +65,40 @@ if (-not $SkipBuild) {
             dotnet publish $windowsProj -c $Configuration -o $publishDir
             if ($LASTEXITCODE -ne 0) {
                 throw "Build failed for OpenDsc.Resource.CommandLine.Windows with exit code $LASTEXITCODE"
+            }
+
+            if ($Portable) {
+                Write-Host "Building self-contained portable version..." -ForegroundColor Cyan
+                $portableDir = Join-Path $PSScriptRoot "artifacts\portable"
+                dotnet publish $windowsProj `
+                    --configuration $Configuration `
+                    --runtime win-x64 `
+                    --self-contained true `
+                    -p:PublishSingleFile=true `
+                    -p:IncludeNativeLibrariesForSelfExtract=true `
+                    -p:EnableCompressionInSingleFile=false `
+                    -p:DebugType=None `
+                    -p:DebugSymbols=false `
+                    --output $portableDir
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Portable build failed for OpenDsc.Resource.CommandLine.Windows with exit code $LASTEXITCODE"
+                }
+                Write-Host "Self-contained portable version built successfully!" -ForegroundColor Green
+                Write-Host "Output location: $portableDir" -ForegroundColor Green
+            }
+        }
+
+        if ($Msi) {
+            Write-Host "Building MSI installer..." -ForegroundColor Cyan
+            $wixProj = Join-Path $PSScriptRoot "setup\OpenDsc.Resource.CommandLine.Windows.wixproj"
+            if (Test-Path $wixProj) {
+                dotnet build $wixProj -c $Configuration
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Build failed for MSI installer with exit code $LASTEXITCODE"
+                }
+                $msiDir = Join-Path $PSScriptRoot "artifacts\msi"
+                Write-Host "MSI installer built successfully!" -ForegroundColor Green
+                Write-Host "Output location: $msiDir" -ForegroundColor Green
             }
         }
 

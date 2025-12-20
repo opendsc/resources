@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package
+    Name="OpenDSC Windows Resources"
+    Manufacturer="OpenDSC"
+    Version="$(Version)"
+    UpgradeCode="A7B8C9D0-E1F2-4A3B-8C4D-5E6F7A8B9C0D">
+
+    <!-- Media -->
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Major upgrades -->
+    <MajorUpgrade
+      DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <!-- ARP metadata -->
+    <Property Id="ARPURLINFOABOUT"
+              Value="https://github.com/OpenDSC/OpenDSC" />
+
+    <Property Id="ARPHELPLINK"
+              Value="https://github.com/OpenDSC/OpenDSC/issues" />
+
+    <!-- UI -->
+    <WixVariable Id="WixUILicenseRtf" Value="$(LicenseRtfPath)" />
+    <ui:WixUI Id="WixUI_Minimal" />
+
+    <!-- Install location -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="OpenDSC">
+        <Directory Id="ResourcesRootFolder" Name="Resources">
+          <Directory Id="ResourcesFolder" Name="Windows" />
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Feature -->
+    <Feature
+      Id="ProductFeature"
+      Title="OpenDSC Windows Resources"
+      Level="1">
+
+      <ComponentRef Id="AppFiles" />
+      <ComponentRef Id="PathEnvironment" />
+    </Feature>
+
+    <!-- ========================= -->
+    <!-- Application files -->
+    <!-- ========================= -->
+    <Component
+      Id="AppFiles"
+      Directory="ResourcesFolder"
+      Guid="A7B8C9D0-E1F2-4A3B-8C4D-5E6F7A8B9C0E">
+
+      <!-- KeyPath -->
+      <File
+        Source="..\artifacts\publish\OpenDsc.Resource.CommandLine.Windows.exe"
+        KeyPath="yes" />
+
+      <!-- Runtime & metadata -->
+      <File Source="..\artifacts\publish\OpenDsc.Resource.CommandLine.Windows.runtimeconfig.json" />
+      <File Source="..\artifacts\publish\OpenDsc.Resource.CommandLine.Windows.deps.json" />
+      <File Source="..\artifacts\publish\OpenDsc.Resource.CommandLine.Windows.dsc.manifests.json" />
+
+      <!-- Application DLLs -->
+      <File Source="..\artifacts\publish\OpenDsc.Resource.CommandLine.Windows.dll" />
+      <File Source="..\artifacts\publish\OpenDsc.Resource.CommandLine.dll" />
+      <File Source="..\artifacts\publish\OpenDsc.Resource.dll" />
+      <File Source="..\artifacts\publish\OpenDsc.Resource.Windows.dll" />
+      <File Source="..\artifacts\publish\OpenDsc.Resource.FileSystem.dll" />
+      <File Source="..\artifacts\publish\OpenDsc.Resource.Xml.dll" />
+
+      <!-- Dependencies -->
+      <File Source="..\artifacts\publish\System.CommandLine.dll" />
+      <File Source="..\artifacts\publish\JsonSchema.Net.dll" />
+      <File Source="..\artifacts\publish\JsonSchema.Net.Generation.dll" />
+      <File Source="..\artifacts\publish\JsonPointer.Net.dll" />
+      <File Source="..\artifacts\publish\Json.More.dll" />
+      <File Source="..\artifacts\publish\Humanizer.dll" />
+      <File Source="..\artifacts\publish\NuGet.Versioning.dll" />
+    </Component>
+
+    <!-- ========================= -->
+    <!-- PATH environment update -->
+    <!-- ========================= -->
+    <Component
+      Id="PathEnvironment"
+      Directory="ResourcesFolder"
+      Guid="B8C9D0E1-F2A3-4B3C-8D4E-5F6A7B8C9D0E">
+
+      <Environment
+        Name="PATH"
+        Value="[ResourcesFolder]"
+        Action="set"
+        Part="last"
+        System="yes" />
+    </Component>
+
+  </Package>
+</Wix>
