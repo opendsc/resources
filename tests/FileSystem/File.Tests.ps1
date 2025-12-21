@@ -1,12 +1,12 @@
-Describe 'File Resource' {
+Describe 'File Resource' -Tag 'Windows', 'Linux', 'macOS' {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot "..\artifacts\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
     }
 
-    Context 'Discovery' {
+    Context 'Discovery' -Tag 'Discovery' {
         It 'should be found by dsc' {
             $result = dsc resource list OpenDsc.FileSystem/File | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
@@ -22,7 +22,7 @@ Describe 'File Resource' {
 
 }
 
-    Context 'Get Operation' {
+    Context 'Get Operation' -Tag 'Get' {
         It 'should return _exist=false for non-existent file' {
             $testFile = Join-Path $TestDrive 'NonExistentFile.txt'
             $inputJson = @{
@@ -52,7 +52,7 @@ Describe 'File Resource' {
         }
     }
 
-    Context 'Set Operation' {
+    Context 'Set Operation' -Tag 'Set' {
         It 'should create a new file with content' {
             $testFile = Join-Path $TestDrive 'NewFile.txt'
             $testContent = 'New file content'
@@ -135,7 +135,7 @@ Describe 'File Resource' {
 
     }
 
-    Context 'Delete Operation' {
+    Context 'Delete Operation' -Tag 'Delete' {
         It 'should delete an existing file' {
             $testFile = Join-Path $TestDrive 'FileToDelete.txt'
             $testContent = 'Content to delete'
@@ -166,7 +166,7 @@ Describe 'File Resource' {
         }
     }
 
-    Context 'Schema Validation' {
+    Context 'Schema Validation' -Tag 'Schema' {
         It 'should reject when path is missing' {
             $invalidInput = @{
                 content = 'Some content'

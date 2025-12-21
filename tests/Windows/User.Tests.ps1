@@ -1,8 +1,8 @@
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Describe 'Windows User Resource' -Skip:(!$IsWindows) {
+Describe 'Windows User Resource' -Tag 'Windows' -Skip:(!$IsWindows) {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot "..\artifacts\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
@@ -32,7 +32,7 @@ Describe 'Windows User Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Discovery' {
+    Context 'Discovery' -Tag 'Discovery' {
         It 'should be found by dsc' {
             $result = dsc resource list OpenDsc.Windows/User | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
@@ -51,7 +51,7 @@ Describe 'Windows User Resource' -Skip:(!$IsWindows) {
 
     }
 
-    Context 'Get Operation - Non-Elevated' {
+    Context 'Get Operation - Non-Elevated' -Tag 'Get' {
         It 'should return _exist=false for non-existent user' {
             $inputJson = @{
                 userName = 'NonExistUser99'
@@ -86,7 +86,7 @@ Describe 'Windows User Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Get Operation - Elevated' -Skip:(!$isAdmin) {
+    Context 'Get Operation - Elevated' -Tag 'Get', 'Admin' -Skip:(!$isAdmin) {
         It 'should read properties of existing user' {
             $context = [System.DirectoryServices.AccountManagement.PrincipalContext]::new('Machine')
             $user = [System.DirectoryServices.AccountManagement.UserPrincipal]::new($context)
@@ -123,7 +123,7 @@ Describe 'Windows User Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - Create User' -Skip:(!$isAdmin) {
+    Context 'Set Operation - Create User' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
         It 'should create a new user account' {
             $inputJson = @{
                 userName = $script:testUser1
@@ -184,7 +184,7 @@ Describe 'Windows User Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - Update User' -Skip:(!$isAdmin) {
+    Context 'Set Operation - Update User' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             $context = [System.DirectoryServices.AccountManagement.PrincipalContext]::new('Machine')
             $user = [System.DirectoryServices.AccountManagement.UserPrincipal]::new($context)
@@ -275,7 +275,7 @@ Describe 'Windows User Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Delete Operation' -Skip:(!$isAdmin) {
+    Context 'Delete Operation' -Tag 'Delete', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             $context = [System.DirectoryServices.AccountManagement.PrincipalContext]::new('Machine')
             $user = [System.DirectoryServices.AccountManagement.UserPrincipal]::new($context)
@@ -310,7 +310,7 @@ Describe 'Windows User Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Export Operation' -Skip:(!$isAdmin) {
+    Context 'Export Operation' -Tag 'Export', 'Admin' -Skip:(!$isAdmin) {
         BeforeAll {
         $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
             $context = [System.DirectoryServices.AccountManagement.PrincipalContext]::new('Machine')

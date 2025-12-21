@@ -1,14 +1,14 @@
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Describe 'Windows Service Resource' -Skip:(!$IsWindows) {
+Describe 'Windows Service Resource' -Tag 'Windows' -Skip:(!$IsWindows) {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot '..\artifacts\publish'
+        $publishDir = Join-Path $PSScriptRoot "..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
     }
 
-    Context 'Discovery' {
+    Context 'Discovery' -Tag 'Discovery' {
         It 'should be found by dsc' {
             $result = dsc resource list OpenDsc.Windows/Service | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
@@ -23,7 +23,7 @@ Describe 'Windows Service Resource' -Skip:(!$IsWindows) {
             $result.capabilities | Should -Contain 'export'
         }
 
-        Context 'Get Operation' {
+        Context 'Get Operation' -Tag 'Get' {
             It 'should return _exist=false for non-existent service' {
                 $inputJson = @{
                     name = 'NonExistentService_12345'
@@ -60,7 +60,7 @@ Describe 'Windows Service Resource' -Skip:(!$IsWindows) {
             }
         }
 
-        Context 'Export Operation' {
+        Context 'Export Operation' -Tag 'Export' {
             It 'should export all services' {
                 $result = dsc resource export -r OpenDsc.Windows/Service | ConvertFrom-Json
 
@@ -83,7 +83,7 @@ Describe 'Windows Service Resource' -Skip:(!$IsWindows) {
             }
         }
 
-        Context 'Schema Validation' {
+        Context 'Schema Validation' -Tag 'Schema' {
             It 'should validate service name pattern (no slashes)' {
                 $invalidInput = @{
                     name      = 'Invalid/Service'
@@ -118,7 +118,7 @@ Describe 'Windows Service Resource' -Skip:(!$IsWindows) {
             }
         }
 
-        Context 'Set Operation' -Skip:(!$isAdmin) {
+        Context 'Set Operation' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
             BeforeAll {
                 $script:createdServices = @()
                 $testServiceExe = Join-Path $PSScriptRoot 'TestService\bin\Release\net9.0-windows\win-x64\publish\TestService.exe'
@@ -308,7 +308,7 @@ Describe 'Windows Service Resource' -Skip:(!$IsWindows) {
             }
         }
 
-        Context 'Delete Operation' -Skip:(!$isAdmin) {
+        Context 'Delete Operation' -Tag 'Delete', 'Admin' -Skip:(!$isAdmin) {
             It 'should delete an existing service' {
                 $serviceName = "DscTestService_$([Guid]::NewGuid().ToString('N').Substring(0, 8))"
 
@@ -356,7 +356,7 @@ Describe 'Windows Service Resource' -Skip:(!$IsWindows) {
             }
         }
 
-        Context 'Service Dependencies' -Skip:(!$isAdmin) {
+        Context 'Service Dependencies' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
             It 'should create service with dependencies' {
                 $serviceName = "DscTestService_$([Guid]::NewGuid().ToString('N').Substring(0, 8))"
 
@@ -410,7 +410,7 @@ Describe 'Windows Service Resource' -Skip:(!$IsWindows) {
             }
         }
 
-        Context 'Service Status Management' -Skip:(!$isAdmin) {
+        Context 'Service Status Management' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
             It 'should start a service' {
                 $serviceName = "DscTestService_$([Guid]::NewGuid().ToString('N').Substring(0, 8))"
 

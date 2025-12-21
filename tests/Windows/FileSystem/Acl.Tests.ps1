@@ -1,8 +1,8 @@
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Describe 'Windows FileSystem ACL Resource' -Skip:(!$IsWindows) {
+Describe 'Windows File System ACL Resource' -Tag 'Windows' -Skip:(!$IsWindows) {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot "..\artifacts\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
@@ -11,7 +11,7 @@ Describe 'Windows FileSystem ACL Resource' -Skip:(!$IsWindows) {
         $script:testFile = Join-Path $script:testDir "testfile.txt"
     }
 
-    Context 'Discovery' {
+    Context 'Discovery' -Tag 'Discovery' {
         It 'should be found by dsc' {
             $result = dsc resource list OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
@@ -26,7 +26,7 @@ Describe 'Windows FileSystem ACL Resource' -Skip:(!$IsWindows) {
 
 }
 
-    Context 'Get Operation - Non-Elevated' {
+    Context 'Get Operation - Non-Elevated' -Tag 'Get' {
         BeforeAll {
         $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
             New-Item -Path $script:testDir -ItemType Directory -Force | Out-Null
@@ -87,7 +87,7 @@ Describe 'Windows FileSystem ACL Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - Add Access Rule' -Skip:(!$isAdmin) {
+    Context 'Set Operation - Add Access Rule' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
         BeforeAll {
         $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
             New-Item -Path $script:testDir -ItemType Directory -Force | Out-Null
@@ -182,7 +182,7 @@ Describe 'Windows FileSystem ACL Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - Change Owner' -Skip:(!$isAdmin) {
+    Context 'Set Operation - Change Owner' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             $script:tempFile = Join-Path $env:TEMP "DscAclOwnerTest_$(Get-Random).txt"
             New-Item -Path $script:tempFile -ItemType File -Force | Out-Null
@@ -212,7 +212,7 @@ Describe 'Windows FileSystem ACL Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - Purge Mode' -Skip:(!$isAdmin) {
+    Context 'Set Operation - Purge Mode' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             $script:purgeTestFile = Join-Path $env:TEMP "DscAclPurgeTest_$(Get-Random).txt"
             New-Item -Path $script:purgeTestFile -ItemType File -Force | Out-Null
@@ -265,7 +265,7 @@ Describe 'Windows FileSystem ACL Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Schema Validation' {
+    Context 'Schema Validation' -Tag 'Schema' {
         It 'should have no duplicate enum values in rights' {
             $schemaJson = dsc resource schema -r OpenDsc.Windows.FileSystem/AccessControlList | ConvertFrom-Json
             $rightsEnum = $schemaJson.properties.accessRules.items.properties.rights.items.enum
@@ -324,7 +324,7 @@ Describe 'Windows FileSystem ACL Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Multiple Selection in Arrays' -Skip:(!$isAdmin) {
+    Context 'Multiple Selection in Arrays' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             $script:multiSelectDir = Join-Path $env:TEMP "DscAclMultiSelect_$(Get-Random)"
             New-Item -Path $script:multiSelectDir -ItemType Directory -Force | Out-Null

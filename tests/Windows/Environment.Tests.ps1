@@ -1,12 +1,12 @@
-Describe 'Windows Environment Variable Resource' -Skip:(!$IsWindows) {
+Describe 'Windows Environment Variable Resource' -Tag 'Windows' -Skip:(!$IsWindows) {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot "..\artifacts\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
     }
 
-    Context 'Discovery' {
+    Context 'Discovery' -Tag 'Discovery' {
         It 'should be found by dsc' {
             $result = dsc resource list OpenDsc.Windows/Environment | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
@@ -23,7 +23,7 @@ Describe 'Windows Environment Variable Resource' -Skip:(!$IsWindows) {
 
 }
 
-    Context 'Get Operation' {
+    Context 'Get Operation' -Tag 'Get' {
         It 'should return _exist=false for non-existent variable' {
             $inputJson = @{
                 name = 'NonExistentVariable_12345_XYZ'
@@ -70,7 +70,7 @@ Describe 'Windows Environment Variable Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - User Scope' {
+    Context 'Set Operation - User Scope' -Tag 'Set' {
         It 'should create a new user environment variable' {
             $inputJson = @{
                 name = 'TestVar_Create'
@@ -146,7 +146,7 @@ Describe 'Windows Environment Variable Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Delete Operation' {
+    Context 'Delete Operation' -Tag 'Delete' {
         It 'should delete user environment variable' {
             # Create a variable to delete
             [System.Environment]::SetEnvironmentVariable('TestVar_Delete', 'ToBeDeleted', 'User')
@@ -178,7 +178,7 @@ Describe 'Windows Environment Variable Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Export Operation' {
+    Context 'Export Operation' -Tag 'Export' {
         It 'should export all environment variables' {
             $result = dsc resource export -r OpenDsc.Windows/Environment | ConvertFrom-Json
 
@@ -210,7 +210,7 @@ Describe 'Windows Environment Variable Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Schema Validation' {
+    Context 'Schema Validation' -Tag 'Schema' {
         It 'should validate variable name pattern (no equals sign)' {
             $invalidInput = @{
                 name = 'Invalid=Name'

@@ -1,6 +1,6 @@
-Describe 'XML Element Resource' {
+Describe 'XML Element Resource' -Tag 'Windows', 'Linux', 'macOS' {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot "..\artifacts\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
@@ -9,7 +9,7 @@ Describe 'XML Element Resource' {
         New-Item -ItemType Directory -Path $testDir -Force | Out-Null
     }
 
-    Context 'Discovery' {
+    Context 'Discovery' -Tag 'Discovery' {
         It 'should be found by dsc' {
             $result = dsc resource list OpenDsc.Xml/Element | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
@@ -24,7 +24,7 @@ Describe 'XML Element Resource' {
         }
     }
 
-    Context 'Get Operation' {
+    Context 'Get Operation' -Tag 'Get' {
         It 'should return _exist=false for non-existent file' {
             $inputJson = @{
                 path  = Join-Path $testDir 'nonexistent.xml'
@@ -97,7 +97,7 @@ Describe 'XML Element Resource' {
         }
     }
 
-    Context 'Set Operation - Element Creation' {
+    Context 'Set Operation - Element Creation' -Tag 'Set' {
         It 'should fail when file does not exist' {
             $inputJson = @{
                 path  = Join-Path $testDir 'nonexistent.xml'
@@ -189,7 +189,7 @@ Describe 'XML Element Resource' {
         }
     }
 
-    Context 'Set Operation - Attribute Management' {
+    Context 'Set Operation - Attribute Management' -Tag 'Set' {
         It 'should add attributes in additive mode (default)' {
             $xmlPath = Join-Path $testDir 'test-attr-1.xml'
             @'
@@ -284,7 +284,7 @@ Describe 'XML Element Resource' {
         }
     }
 
-    Context 'Delete Operation' {
+    Context 'Delete Operation' -Tag 'Delete' {
         It 'should remove element when _exist=false' {
             $xmlPath = Join-Path $testDir 'test-delete-1.xml'
             @'

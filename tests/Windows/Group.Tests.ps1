@@ -1,8 +1,8 @@
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Describe 'Windows Group Resource' -Skip:(!$IsWindows) {
+Describe 'Windows Group Resource' -Tag 'Windows' -Skip:(!$IsWindows) {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot "..\artifacts\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
@@ -17,7 +17,7 @@ Describe 'Windows Group Resource' -Skip:(!$IsWindows) {
         Get-LocalGroup -Name DscTestGroup* | Remove-LocalGroup
     }
 
-    Context 'Discovery' {
+    Context 'Discovery' -Tag 'Discovery' {
         It 'should be found by dsc' {
             $result = dsc resource list OpenDsc.Windows/Group | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
@@ -36,7 +36,7 @@ Describe 'Windows Group Resource' -Skip:(!$IsWindows) {
 
     }
 
-    Context 'Get Operation - Non-Elevated' {
+    Context 'Get Operation - Non-Elevated' -Tag 'Get' {
         It 'should return _exist=false for non-existent group' {
             $inputJson = @{
                 groupName = 'NonExistGroup99'
@@ -67,7 +67,7 @@ Describe 'Windows Group Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - Create Group' -Skip:(!$isAdmin) {
+    Context 'Set Operation - Create Group' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
         AfterEach {
             try {
                 Get-LocalGroup -Name $script:testGroup1 -ErrorAction SilentlyContinue | Remove-LocalGroup
@@ -122,7 +122,7 @@ Describe 'Windows Group Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - Update Group' -Skip:(!$isAdmin) {
+    Context 'Set Operation - Update Group' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             New-LocalGroup -Name $script:testGroup1 -Description 'Original Description'
         }
@@ -208,7 +208,7 @@ Describe 'Windows Group Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Delete Operation' -Skip:(!$isAdmin) {
+    Context 'Delete Operation' -Tag 'Delete', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             New-LocalGroup -Name $script:testGroup1 -Description 'Test Group to Delete'
         }
@@ -251,7 +251,7 @@ Describe 'Windows Group Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Export Operation' -Skip:(!$isAdmin) {
+    Context 'Export Operation' -Tag 'Export', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             New-LocalGroup -Name $script:testGroup1 -Description 'Test Export Group'
         }
@@ -289,7 +289,7 @@ Describe 'Windows Group Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Member Format Support' -Skip:(!$isAdmin) {
+    Context 'Member Format Support' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             if (-not (Get-LocalGroup -Name $script:testGroup1 -ErrorAction SilentlyContinue)) {
                 New-LocalGroup -Name $script:testGroup1 -Description 'Test Group for Member Format Tests'

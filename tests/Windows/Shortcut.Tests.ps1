@@ -1,6 +1,6 @@
-Describe 'Windows Shortcut Resource' -Skip:(!$IsWindows) {
+Describe 'Windows Shortcut Resource' -Tag 'Windows' -Skip:(!$IsWindows) {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot "..\artifacts\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
@@ -10,7 +10,7 @@ Describe 'Windows Shortcut Resource' -Skip:(!$IsWindows) {
         $calcPath = 'C:\Windows\System32\calc.exe'
     }
 
-    Context 'Discovery' {
+    Context 'Discovery' -Tag 'Discovery' {
         It 'should be found by dsc' {
             $result = dsc resource list OpenDsc.Windows/Shortcut | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
@@ -26,7 +26,7 @@ Describe 'Windows Shortcut Resource' -Skip:(!$IsWindows) {
 
 }
 
-    Context 'Get Operation' {
+    Context 'Get Operation' -Tag 'Get' {
         It 'should return _exist=false for non-existent shortcut' {
             $shortcutPath = Join-Path $TestDrive 'nonexistent.lnk'
             $inputJson = @{
@@ -66,7 +66,7 @@ Describe 'Windows Shortcut Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - Basic Properties' {
+    Context 'Set Operation - Basic Properties' -Tag 'Set' {
         It 'should create a basic shortcut with required properties only' {
             $shortcutPath = Join-Path $TestDrive 'basic.lnk'
             $inputJson = @{
@@ -174,7 +174,7 @@ Describe 'Windows Shortcut Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - Window Styles' {
+    Context 'Set Operation - Window Styles' -Tag 'Set' {
         It 'should set windowStyle to Normal' {
             $shortcutPath = Join-Path $TestDrive 'window-normal.lnk'
             $inputJson = @{
@@ -227,7 +227,7 @@ Describe 'Windows Shortcut Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation - Complex Scenarios' {
+    Context 'Set Operation - Complex Scenarios' -Tag 'Set' {
         It 'should create shortcut with all properties set' {
             $shortcutPath = Join-Path $TestDrive 'all-properties.lnk'
             $inputJson = @{
@@ -281,7 +281,7 @@ Describe 'Windows Shortcut Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Delete Operation' {
+    Context 'Delete Operation' -Tag 'Delete' {
         It 'should delete an existing shortcut' {
             $shortcutPath = Join-Path $TestDrive 'to-delete.lnk'
 

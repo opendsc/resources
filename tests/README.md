@@ -1,71 +1,80 @@
 # DSC Resource Tests
 
-This directory contains integration tests for all DSC resources across
-platforms.
+Integration tests for all OpenDsc resources using Pester and the DSC CLI.
+
+## Quick Start
+
+Run all tests:
+
+```powershell
+.\build.ps1
+```
+
+Run tests for a specific area:
+
+```powershell
+Invoke-Pester .\tests\Windows\
+Invoke-Pester .\tests\FileSystem\
+```
+
+Run specific tests using tags:
+
+```powershell
+# Run all Windows package tests
+Invoke-Pester -Tag Windows
+
+# Run only non-admin tests
+Invoke-Pester -ExcludeTag Admin
+
+# Run only discovery tests (fast, no system changes)
+Invoke-Pester -Tag Discovery
+
+# Run only read operations
+Invoke-Pester -Tag Get
+
+# Run cross-platform tests only
+Invoke-Pester -Tag Linux
+```
+
+## Prerequisites
+
+- **DSC CLI** - Install automatically with `.\build.ps1 -InstallDsc`
+- **Admin privileges** - Required for some tests (User, Group, Service,
+  OptionalFeature)
+- **Windows** - Platform-specific tests automatically skip on non-Windows
 
 ## Test Organization
 
-Tests are organized by resource name (not by platform), with each test file
-handling platform detection automatically:
+Tests are organized by area/platform:
 
-- **Windows-only resources**: Group, User, Service, Environment, Shortcut,
-  OptionalFeature, FileSystemAcl
-- **Cross-platform resources**: File, Directory, XmlElement
+- `Windows/` - Windows-specific resources (Group, User, Service, etc.)
+- `FileSystem/` - Cross-platform file/directory resources
+- `Xml/` - Cross-platform XML manipulation resources
 
-## Running Tests
+## Test Tags
 
-### All Tests
+All tests are tagged to enable flexible filtering:
 
-```powershell
-.\build.ps1 -InstallDsc
-```
+**OS Tags** (on Describe):
 
-### Specific Test
+- `Windows` - Windows-specific or cross-platform resources in Windows package
+- `Linux`, `macOS` - Cross-platform resources (File, Directory, Xml)
 
-```powershell
-Invoke-Pester .\tests\Group.Tests.ps1
-```
+**Permission Tags** (on Context):
 
-### Platform-Specific
+- `Admin` - Requires administrative privileges
 
-Tests automatically detect the platform and:
+**Operation Tags** (on Context):
 
-- Windows: Tests Windows and cross-platform resources using
-  `OpenDsc.Resource.Windows.exe`
-- Linux: Tests only cross-platform resources using `OpenDsc.Resource.Linux`
+- `Discovery` - Resource discovery tests
+- `Get` - Read current state
+- `Set` - Apply desired state
+- `Delete` - Remove resources
+- `Export` - Export all instances
+- `Schema` - Schema validation
 
-Windows-only tests are skipped on Linux automatically.
+## Contributing Tests
 
-## Test Structure
-
-Each test file follows this pattern:
-
-```powershell
-Describe 'ResourceName Resource' {
-    BeforeAll {
-        # Platform detection
-        if ($IsWindows) {
-            $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
-            $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.Windows\bin\$configuration\net9.0-windows\win-x64\publish"
-        } else {
-            $configuration = $env:BUILD_CONFIGURATION ?? 'Release'
-            $publishPath = Join-Path $PSScriptRoot "..\src\OpenDsc.Resource.Linux\bin\$configuration\net9.0\linux-x64\publish"
-        }
-    }
-
-    Context 'Discovery' { }
-    Context 'Get Operation' { }
-    Context 'Set Operation' -Skip:(!$isAdmin) { }  # If admin required
-    Context 'Delete Operation' -Skip:(!$isAdmin) { }
-}
-```
-
-## Admin-Required Tests
-
-Some tests require administrative privileges (e.g., creating users, managing
-services). These contexts use `-Skip:(!$isAdmin)` to skip gracefully when not
-elevated.
-
-## Environment Variables
-
-- `BUILD_CONFIGURATION`: Set to `Debug` or `Release` (defaults to `Release`)
+Tests are integration tests that verify resources work correctly through the
+DSC CLI. See `.github/copilot-instructions.md` for test patterns and
+conventions.

@@ -1,6 +1,6 @@
-Describe 'Directory Resource' {
+Describe 'Directory Resource' -Tag 'Windows', 'Linux', 'macOS' {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot "..\artifacts\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
@@ -8,7 +8,7 @@ Describe 'Directory Resource' {
         $script:testTempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
     }
 
-    Context 'Discovery' {
+    Context 'Discovery' -Tag 'Discovery' {
         It 'should be found by dsc' {
             $result = dsc resource list OpenDsc.FileSystem/Directory | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
@@ -24,7 +24,7 @@ Describe 'Directory Resource' {
         }
 }
 
-    Context 'Get Operation' {
+    Context 'Get Operation' -Tag 'Get' {
         It 'should return _exist=false for non-existent directory' {
             $testDir = Join-Path $TestDrive 'NonExistentDir'
             $inputJson = @{
@@ -50,7 +50,7 @@ Describe 'Directory Resource' {
         }
     }
 
-    Context 'Set Operation' {
+    Context 'Set Operation' -Tag 'Set' {
         It 'should create a new directory' {
             $testDir = Join-Path $TestDrive 'NewDir'
 
@@ -69,7 +69,7 @@ Describe 'Directory Resource' {
         }
     }
 
-    Context 'Delete Operation' {
+    Context 'Delete Operation' -Tag 'Delete' {
         It 'should delete an existing directory' {
             $testDir = Join-Path $TestDrive 'DirToDelete'
             New-Item -ItemType Directory -Path $testDir | Out-Null
@@ -156,7 +156,7 @@ Describe 'Directory Resource' {
         }
     }
 
-    Context 'Schema Validation' {
+    Context 'Schema Validation' -Tag 'Schema' {
         It 'should reject when path is missing' {
             $invalidInput = @{
                 sourcePath = 'C:\Some\Path'

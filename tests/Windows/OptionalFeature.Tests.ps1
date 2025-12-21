@@ -1,8 +1,8 @@
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-Describe 'Windows Optional Feature Resource' -Skip:(!$IsWindows) {
+Describe 'Windows Optional Feature Resource' -Tag 'Windows' -Skip:(!$IsWindows) {
     BeforeAll {
-        $publishDir = Join-Path $PSScriptRoot "..\artifacts\publish"
+        $publishDir = Join-Path $PSScriptRoot "..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
@@ -11,7 +11,7 @@ Describe 'Windows Optional Feature Resource' -Skip:(!$IsWindows) {
         $testFeatureName = 'TelnetClient'
     }
 
-    Context 'Discovery' {
+    Context 'Discovery' -Tag 'Discovery' {
         It 'should be found by dsc' {
             $result = dsc resource list OpenDsc.Windows/OptionalFeature | ConvertFrom-Json
             $result | Should -Not -BeNullOrEmpty
@@ -27,7 +27,7 @@ Describe 'Windows Optional Feature Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Get Operation' -Skip:(!$isAdmin) {
+    Context 'Get Operation' -Tag 'Get', 'Admin' -Skip:(!$isAdmin) {
         It 'should return _exist=false for non-existent feature' {
             $inputJson = @{
                 name = 'NonExistentFeature-12345-XYZ'
@@ -68,7 +68,7 @@ Describe 'Windows Optional Feature Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Set Operation' -Skip:(!$isAdmin) {
+    Context 'Set Operation' -Tag 'Set', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             try {
                 $getInput = @{ name = $testFeatureName } | ConvertTo-Json -Compress
@@ -156,7 +156,7 @@ Describe 'Windows Optional Feature Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Delete Operation' -Skip:(!$isAdmin) {
+    Context 'Delete Operation' -Tag 'Delete', 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             try {
                 $inputJson = @{
@@ -204,7 +204,7 @@ Describe 'Windows Optional Feature Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Restart Metadata' -Skip:(!$isAdmin) {
+    Context 'Restart Metadata' -Tag 'Admin' -Skip:(!$isAdmin) {
         BeforeEach {
             try {
                 $getInput = @{ name = $testFeatureName } | ConvertTo-Json -Compress
@@ -241,7 +241,7 @@ Describe 'Windows Optional Feature Resource' -Skip:(!$IsWindows) {
         }
     }
 
-    Context 'Export Operation' -Skip:(!$isAdmin) {
+    Context 'Export Operation' -Tag 'Export', 'Admin' -Skip:(!$isAdmin) {
         It 'should export all features' {
             $result = dsc resource export -r $resourceName | ConvertFrom-Json
 
