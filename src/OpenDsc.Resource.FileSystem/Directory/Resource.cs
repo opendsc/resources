@@ -7,6 +7,9 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using Json.Schema;
+using Json.Schema.Generation;
+
 namespace OpenDsc.Resource.FileSystem.Directory;
 
 [DscResource("OpenDsc.FileSystem/Directory", "0.1.0", Description = "Manage directories", Tags = ["directory", "filesystem"])]
@@ -19,6 +22,20 @@ namespace OpenDsc.Resource.FileSystem.Directory;
 [ExitCode(6, Exception = typeof(UnauthorizedAccessException), Description = "Access denied")]
 public sealed class Resource(JsonSerializerContext context) : DscResource<Schema>(context), IGettable<Schema>, ISettable<Schema>, IDeletable<Schema>, ITestable<Schema>
 {
+    public override string GetSchema()
+    {
+        var config = new SchemaGeneratorConfiguration()
+        {
+            PropertyNameResolver = PropertyNameResolvers.CamelCase
+        };
+
+        var builder = new JsonSchemaBuilder().FromType<Schema>(config);
+        builder.Schema("https://json-schema.org/draft/2020-12/schema");
+        var schema = builder.Build();
+
+        return JsonSerializer.Serialize(schema);
+    }
+
     public Schema Get(Schema instance)
     {
         var fullPath = Path.GetFullPath(instance.Path);

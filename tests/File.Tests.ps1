@@ -165,4 +165,36 @@ Describe 'File Resource' {
             { dsc resource delete -r OpenDsc.FileSystem/File --input $inputJson } | Should -Not -Throw
         }
     }
+
+    Context 'Schema Validation' {
+        It 'should reject when path is missing' {
+            $invalidInput = @{
+                content = 'Some content'
+            } | ConvertTo-Json -Compress
+
+            dsc resource set -r OpenDsc.FileSystem/File --input $invalidInput 2>&1 | Out-Null
+            $LASTEXITCODE | Should -Not -Be 0
+        }
+
+        It 'should accept valid file paths' {
+            $testFile = Join-Path $TestDrive 'ValidFile.txt'
+            $validInput = @{
+                path = $testFile
+                content = 'Test content'
+            } | ConvertTo-Json -Compress
+
+            dsc resource set -r OpenDsc.FileSystem/File --input $validInput | Out-Null
+            $LASTEXITCODE | Should -Be 0
+
+            Remove-Item $testFile -ErrorAction SilentlyContinue
+        }
+
+        It 'should retrieve schema successfully' {
+            $schema = dsc resource schema -r OpenDsc.FileSystem/File | ConvertFrom-Json
+            $schema | Should -Not -BeNullOrEmpty
+            $schema.'$schema' | Should -Be 'https://json-schema.org/draft/2020-12/schema'
+            $schema.properties.path | Should -Not -BeNullOrEmpty
+            $schema.required | Should -Contain 'path'
+        }
+    }
 }

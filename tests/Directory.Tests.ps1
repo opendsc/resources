@@ -155,4 +155,33 @@ Describe 'Directory Resource' {
             $testResult.inDesiredState | Should -Be $true
         }
     }
+
+    Context 'Schema Validation' {
+        It 'should reject when path is missing' {
+            $invalidInput = @{
+                sourcePath = 'C:\Some\Path'
+            } | ConvertTo-Json -Compress
+
+            dsc resource set -r OpenDsc.FileSystem/Directory --input $invalidInput 2>&1 | Out-Null
+            $LASTEXITCODE | Should -Not -Be 0
+        }
+
+        It 'should accept valid directory paths' {
+            $testDir = Join-Path $TestDrive 'ValidPath'
+            $validInput = @{
+                path = $testDir
+            } | ConvertTo-Json -Compress
+
+            dsc resource set -r OpenDsc.FileSystem/Directory --input $validInput | Out-Null
+            $LASTEXITCODE | Should -Be 0
+        }
+
+        It 'should retrieve schema successfully' {
+            $schema = dsc resource schema -r OpenDsc.FileSystem/Directory | ConvertFrom-Json
+            $schema | Should -Not -BeNullOrEmpty
+            $schema.'$schema' | Should -Be 'https://json-schema.org/draft/2020-12/schema'
+            $schema.properties.path | Should -Not -BeNullOrEmpty
+            $schema.required | Should -Contain 'path'
+        }
+    }
 }
