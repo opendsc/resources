@@ -1,7 +1,8 @@
-<Project Sdk="WixToolset.Sdk/5.0.2">
+<Project Sdk="WixToolset.Sdk/6.0.2">
   <PropertyGroup>
     <OutputType>Package</OutputType>
     <OutputPath>..\artifacts\msi\</OutputPath>
+    <TargetName>OpenDSC-$(Version)</TargetName>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Platform>x64</Platform>
     <SuppressPdbOutput>true</SuppressPdbOutput>
