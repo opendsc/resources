@@ -39,8 +39,8 @@
     </Feature>
 
     <ComponentGroup Id="AppFiles" Directory="ResourcesRootFolder">
-      <Files Include="$(var.ProjectDir)..\artifacts\publish\**">
-        <Exclude Files="$(var.ProjectDir)..\artifacts\publish\**\*.pdb" />
+      <Files Include="$(var.ProjectDir)..\..\artifacts\publish\**">
+        <Exclude Files="$(var.ProjectDir)..\..\artifacts\publish\**\*.pdb" />
       </Files>
     </ComponentGroup>
 

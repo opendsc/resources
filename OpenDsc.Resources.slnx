@@ -6,7 +6,4 @@
     <Project Path="src/OpenDsc.Resource.CommandLine.Windows/OpenDsc.Resource.CommandLine.Windows.csproj" />
     <Project Path="src/OpenDsc.Resource.Xml/OpenDsc.Resource.Xml.csproj" />
   </Folder>
-  <Folder Name="/setup/">
-    <Project Path="setup/OpenDsc.Resource.CommandLine.Windows.wixproj" />
-  </Folder>
 </Solution>

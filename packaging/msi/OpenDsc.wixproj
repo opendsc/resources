@@ -1,7 +1,7 @@
 <Project Sdk="WixToolset.Sdk/6.0.2">
   <PropertyGroup>
     <OutputType>Package</OutputType>
-    <OutputPath>..\artifacts\msi\</OutputPath>
+    <OutputPath>..\..\artifacts\msi\</OutputPath>
     <TargetName>OpenDSC-$(Version)</TargetName>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Platform>x64</Platform>
@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="OpenDsc.Resource.CommandLine.Windows.wxs" />
+    <Compile Include="Product.wxs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,12 +21,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\OpenDsc.Resource.CommandLine.Windows\OpenDsc.Resource.CommandLine.Windows.csproj" />
+    <ProjectReference Include="..\..\src\OpenDsc.Resource.CommandLine.Windows\OpenDsc.Resource.CommandLine.Windows.csproj" />
   </ItemGroup>
 
   <Target Name="ConvertLicenseToRtf" BeforeTargets="BeforeBuild;PrepareForBuild">
     <PropertyGroup>
-      <LicenseTxt>$(MSBuildProjectDirectory)\..\LICENSE</LicenseTxt>
+      <LicenseTxt>$(MSBuildProjectDirectory)\..\..\LICENSE</LicenseTxt>
       <LicenseRtf>$(IntermediateOutputPath)License.rtf</LicenseRtf>
       <LicenseRtfFullPath>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)License.rtf</LicenseRtfFullPath>
     </PropertyGroup>
