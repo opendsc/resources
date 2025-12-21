@@ -193,6 +193,7 @@ dsc resource export -r OpenDsc.Windows/Environment
 The resource returns the following exit codes:
 
 - **0** - Success
-- **1** - Invalid argument
-- **2** - Resource not found
-- **3** - JSON error
+- **1** - Error
+- **2** - Invalid JSON
+- **3** - Access denied
+- **4** - Invalid argument

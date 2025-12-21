@@ -134,6 +134,9 @@ dsc resource export -r OpenDsc.Windows/User
 ## Exit Codes
 
 - **0** - Success
-- **1** - Invalid parameter
-- **3** - Invalid JSON
-- **4** - Access denied (insufficient privileges)
+- **1** - Error
+- **2** - Invalid JSON
+- **3** - Access denied
+- **4** - Invalid argument
+- **5** - Unauthorized access
+- **6** - User already exists

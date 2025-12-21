@@ -113,6 +113,7 @@ dsc resource delete -r OpenDsc.Windows/Shortcut -i $config
 ## Exit Codes
 
 - **0** - Success
-- **1** - Invalid parameter
-- **3** - Invalid JSON
-- **4** - Access denied
+- **1** - Error
+- **2** - Invalid JSON
+- **3** - Failed to generate schema
+- **4** - Directory not found

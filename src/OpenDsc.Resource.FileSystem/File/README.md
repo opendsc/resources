@@ -91,7 +91,8 @@ dsc resource delete -r OpenDsc.FileSystem/File -i $config
 ## Exit Codes
 
 - **0** - Success
-- **1** - Invalid parameter
-- **2** - File not found
-- **3** - Invalid JSON input
-- **4** - Access denied
+- **1** - Error
+- **2** - Invalid JSON
+- **3** - Access denied
+- **4** - Invalid argument
+- **5** - IO error

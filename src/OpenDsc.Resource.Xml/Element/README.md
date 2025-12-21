@@ -158,7 +158,10 @@ dsc resource set -r OpenDsc.Xml/Element -i $config
 ## Exit Codes
 
 - **0** - Success
-- **1** - Invalid parameter
-- **2** - File not found
-- **3** - Invalid JSON/YAML input
-- **4** - Invalid XML or XPath expression
+- **1** - Error
+- **2** - Invalid JSON
+- **3** - XML file not found
+- **4** - Invalid XML
+- **5** - Invalid XPath expression
+- **6** - Invalid argument
+- **7** - IO error

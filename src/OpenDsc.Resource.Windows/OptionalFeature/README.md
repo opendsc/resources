@@ -119,7 +119,8 @@ dsc resource export -r OpenDsc.Windows/OptionalFeature
 ## Exit Codes
 
 - **0** - Success
-- **1** - Invalid parameter
-- **2** - DISM API error
+- **1** - Error
+- **2** - Feature not found
 - **3** - Invalid JSON
-- **4** - Access denied (insufficient privileges)
+- **4** - Access denied - administrator privileges required
+- **5** - DISM operation failed

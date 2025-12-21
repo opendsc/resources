@@ -124,7 +124,9 @@ dsc resource export -r OpenDsc.Windows/Group
 The resource returns the following exit codes:
 
 - **0** - Success
-- **1** - Invalid argument
-- **2** - Resource not found
+- **1** - Error
+- **2** - Invalid JSON
 - **3** - Access denied
-- **4** - JSON error
+- **4** - Invalid argument
+- **5** - Unauthorized access
+- **6** - Group already exists

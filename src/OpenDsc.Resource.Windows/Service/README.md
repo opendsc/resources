@@ -232,10 +232,10 @@ dsc resource set -r OpenDsc.Windows/Service -i $config
 
 ## Exit Codes
 
-- **0**: Success
-- **1**: Invalid parameter
-- **2**: Resource not found
-- **3**: Invalid JSON
-- **4**: Access denied (requires administrator privileges)
-- **5**: Invalid operation
-- **6**: Service operation failed
+- **0** - Success
+- **1** - Error
+- **2** - Invalid JSON
+- **3** - Windows API error
+- **4** - Invalid argument or missing required parameter
+- **5** - Invalid operation or service state
+- **6** - Service operation timed out

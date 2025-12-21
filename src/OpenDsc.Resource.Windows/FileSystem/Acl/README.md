@@ -177,6 +177,11 @@ dsc resource set -r OpenDsc.Windows.FileSystem/AccessControlList -i $config
 ## Exit Codes
 
 - **0** - Success
-- **1** - Invalid parameter
-- **3** - Invalid JSON
-- **4** - Access denied (insufficient privileges)
+- **1** - Error
+- **2** - Invalid JSON
+- **3** - Access denied
+- **4** - Invalid argument
+- **5** - Unauthorized access
+- **6** - File or directory not found
+- **7** - Directory not found
+- **8** - Identity not found
