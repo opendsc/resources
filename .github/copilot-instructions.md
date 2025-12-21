@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This repository contains DSC v3 (Desired State Configuration) resources for Windows management. Each resource is a standalone C# executable that implements a standard DSC interface through the `OpenDsc.Resource.CommandLine` library.
+This repository contains Microsoft DSC (Desired State Configuration) resources for Windows management. Each resource is a standalone C# executable that implements a standard DSC interface through the `OpenDsc.Resource.CommandLine` library.
 
 **Key Resources:**
 - `windows-environment/` - Environment variable management
