@@ -5,9 +5,9 @@ managing Windows and cross-platform systems.
 
 ## Overview
 
-This repository provides production-ready DSC resources built using .NET 9.0
-and the `OpenDsc.Resource.CommandLine` library. Each resource is implemented as
-a standalone executable that integrates seamlessly with Microsoft DSC.
+This repository provides DSC resources built using .NET 9.0.
+Resources are bundled into platform-specific executables
+that integrate seamlessly with Microsoft DSC.
 
 ## Available Resources
 
@@ -179,18 +179,6 @@ Contributions are welcome! Please:
 This project is licensed under the MIT License. See [LICENSE][license] for
 details.
 
-## Related Projects
-
-- [Microsoft DSC][dsc-repo] - The core DSC engine
-- [OpenDsc.Resource.CommandLine][commandline-repo] -
-  Library for building DSC resources
-
-## Support
-
-- **Documentation:** See individual resource README files
-- **Issues:** [GitHub Issues][issues]
-- **Discussions:** [GitHub Discussions][discussions]
-
 [env-readme]: src/OpenDsc.Resource.Windows/Environment/README.md
 [group-readme]: src/OpenDsc.Resource.Windows/Group/README.md
 [service-readme]: src/OpenDsc.Resource.Windows/Service/README.md
@@ -202,13 +190,9 @@ details.
 [directory-readme]: src/OpenDsc.Resource.FileSystem/Directory/README.md
 [xml-readme]: src/OpenDsc.Resource.Xml/Element/README.md
 [microsoft-dsc]: https://learn.microsoft.com/powershell/dsc/overview
-[releases]: https://github.com/opendsc/resources/releases
+[releases]: https://github.com/opendsc/opendsc/releases
 [dotnet-runtime]: https://dotnet.microsoft.com/download/dotnet/9.0
 [dotnet-sdk]: https://dotnet.microsoft.com/download/dotnet/9.0
 [pester]: https://pester.dev/
 [copilot-instructions]: .github/copilot-instructions.md
 [license]: LICENSE
-[dsc-repo]: https://github.com/PowerShell/DSC
-[commandline-repo]: https://github.com/opendsc/OpenDsc.Resource.CommandLine
-[issues]: https://github.com/opendsc/resources/issues
-[discussions]: https://github.com/opendsc/resources/discussions
