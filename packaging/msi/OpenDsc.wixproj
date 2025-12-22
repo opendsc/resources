@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Package</OutputType>
     <OutputPath>..\..\artifacts\msi\</OutputPath>
-    <TargetName>OpenDSC-$(Version)</TargetName>
+    <TargetName>OpenDSC.Resources-$(Version)</TargetName>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Platform>x64</Platform>
     <SuppressPdbOutput>true</SuppressPdbOutput>

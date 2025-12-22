@@ -83,8 +83,16 @@ if (-not $SkipBuild) {
                 if ($LASTEXITCODE -ne 0) {
                     throw "Portable build failed for OpenDsc.Resource.CommandLine.Windows with exit code $LASTEXITCODE"
                 }
+
+                Write-Host "Creating portable ZIP archive..." -ForegroundColor Cyan
+                $version = ([xml](Get-Content (Join-Path $PSScriptRoot "Directory.Build.props"))).Project.PropertyGroup.Version
+                $zipDir = Join-Path $PSScriptRoot "artifacts\zip"
+                New-Item -ItemType Directory -Path $zipDir -Force | Out-Null
+                $zipPath = Join-Path $zipDir "OpenDSC.Resources.Portable-$version.zip"
+                Compress-Archive -Path "$portableDir\*" -DestinationPath $zipPath -Force
                 Write-Host "Self-contained portable version built successfully!" -ForegroundColor Green
                 Write-Host "Output location: $portableDir" -ForegroundColor Green
+                Write-Host "ZIP archive: $zipPath" -ForegroundColor Green
             }
         }
 
