@@ -208,14 +208,6 @@ if ($InstallDsc) {
     Write-Host "Installed DSC version: $dscVersion"
 }
 
-if (-not $IsWindows) {
-    $publishDir = Join-Path $PSScriptRoot "publish"
-    $testExecutables = Get-ChildItem -Path $publishDir -Filter "OpenDsc.Resource.*" -File | Where-Object { $_.Extension -in @('', '.exe') }
-    foreach ($exe in $testExecutables) {
-        chmod +x $exe.FullName
-    }
-}
-
 if ($SkipTest) {
     exit 0
 }
