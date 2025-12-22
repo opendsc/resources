@@ -98,7 +98,7 @@ if (-not $SkipBuild) {
 
         if ($Msi) {
             Write-Host "Building MSI installer..." -ForegroundColor Cyan
-            $wixProj = Join-Path $PSScriptRoot "packaging\msi\OpenDsc.wixproj"
+            $wixProj = Join-Path $PSScriptRoot "packaging\msi\OpenDsc.Resources\OpenDsc.Resources.wixproj"
             if (Test-Path $wixProj) {
                 dotnet build $wixProj -c $Configuration
                 if ($LASTEXITCODE -ne 0) {
