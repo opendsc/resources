@@ -4,6 +4,8 @@ Describe 'Windows Environment Variable Resource' -Tag 'Windows' -Skip:(!$IsWindo
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
+
+        $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     }
 
     Context 'Discovery' -Tag 'Discovery' {
@@ -262,7 +264,7 @@ Describe 'Windows Environment Variable Resource' -Tag 'Windows' -Skip:(!$IsWindo
             [System.Environment]::SetEnvironmentVariable('TestVar_DefaultScope', $null, 'User')
         }
 
-        It 'should respect machine scope when specified' -Skip:(!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        It 'should respect machine scope when specified' -Skip:(!$isAdmin) {
             $inputJson = @{
                 name = 'TestVar_MachineScope'
                 value = 'MachineValue'
