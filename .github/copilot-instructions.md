@@ -674,7 +674,7 @@ Use [Environment/](../src/OpenDsc.Resource.Windows/Environment/) as the template
 - **COM Interop:** [Shortcut/](../src/OpenDsc.Resource.Windows/Shortcut/) (P/Invoke patterns for COM)
 - **Win32 API:** [Service/](../src/OpenDsc.Resource.Windows/Service/) (Win32 API wrappers)
 - **DISM API:** [OptionalFeature/](../src/OpenDsc.Resource.Windows/OptionalFeature/) (P/Invoke DISM interop)
-- **Test Examples:** [Environment.Tests.ps1](../tests/Environment.Tests.ps1) (comprehensive integration tests)
+- **Test Examples:** [Environment.Tests.ps1](../tests/Windows/Environment.Tests.ps1) (comprehensive integration tests)
 - **Platform Entry Point:** [Program.cs](../src/OpenDsc.Resource.CommandLine.Windows/Program.cs) (resource registration)
 - **Editor Config:** [.editorconfig](../.editorconfig) (C# style rules, file headers)
 
