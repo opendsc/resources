@@ -59,6 +59,10 @@ if (-not $SkipBuild) {
     $publishDir = Join-Path $PSScriptRoot "artifacts\publish"
     New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 
+    if ($Portable) {
+        $version = ([xml](Get-Content (Join-Path $PSScriptRoot "Directory.Build.props"))).Project.PropertyGroup.Version
+    }
+
     if ($IsWindows) {
         $windowsProj = Join-Path $PSScriptRoot "src\OpenDsc.Resource.CommandLine.Windows\OpenDsc.Resource.CommandLine.Windows.csproj"
         if (Test-Path $windowsProj) {
@@ -70,6 +74,7 @@ if (-not $SkipBuild) {
             if ($Portable) {
                 Write-Host "Building self-contained portable version..." -ForegroundColor Cyan
                 $portableDir = Join-Path $PSScriptRoot "artifacts\portable"
+                New-Item -ItemType Directory -Path $portableDir -Force | Out-Null
                 dotnet publish $windowsProj `
                     --configuration $Configuration `
                     --runtime win-x64 `
@@ -85,10 +90,9 @@ if (-not $SkipBuild) {
                 }
 
                 Write-Host "Creating portable ZIP archive..." -ForegroundColor Cyan
-                $version = ([xml](Get-Content (Join-Path $PSScriptRoot "Directory.Build.props"))).Project.PropertyGroup.Version
                 $zipDir = Join-Path $PSScriptRoot "artifacts\zip"
                 New-Item -ItemType Directory -Path $zipDir -Force | Out-Null
-                $zipPath = Join-Path $zipDir "OpenDSC.Resources.Portable-$version.zip"
+                $zipPath = Join-Path $zipDir "OpenDSC.Resources.Windows.Portable-$version.zip"
                 Compress-Archive -Path "$portableDir\*" -DestinationPath $zipPath -Force
                 Write-Host "Self-contained portable version built successfully!" -ForegroundColor Green
                 Write-Host "Output location: $portableDir" -ForegroundColor Green
@@ -118,13 +122,41 @@ if (-not $SkipBuild) {
                 throw "Build failed for TestService with exit code $LASTEXITCODE"
             }
         }
-    } else {
+    } elseif ($IsLinux) {
         $linuxProj = Join-Path $PSScriptRoot "src\OpenDsc.Resource.CommandLine.Linux\OpenDsc.Resource.CommandLine.Linux.csproj"
         if (Test-Path $linuxProj) {
             dotnet publish $linuxProj -c $Configuration -o $publishDir
             if ($LASTEXITCODE -ne 0) {
                 throw "Build failed for OpenDsc.Resource.CommandLine.Linux with exit code $LASTEXITCODE"
             }
+        }
+
+        if ($Portable) {
+            Write-Host "Building self-contained portable version for Linux..." -ForegroundColor Cyan
+            $portableLinuxDir = Join-Path $PSScriptRoot "artifacts\portable-linux"
+            New-Item -ItemType Directory -Path $portableLinuxDir -Force | Out-Null
+            dotnet publish $linuxProj `
+                --configuration $Configuration `
+                --runtime linux-x64 `
+                --self-contained true `
+                -p:PublishSingleFile=true `
+                -p:IncludeNativeLibrariesForSelfExtract=true `
+                -p:EnableCompressionInSingleFile=false `
+                -p:DebugType=None `
+                -p:DebugSymbols=false `
+                --output $portableLinuxDir
+            if ($LASTEXITCODE -ne 0) {
+                throw "Portable build failed for OpenDsc.Resource.CommandLine.Linux with exit code $LASTEXITCODE"
+            }
+
+            Write-Host "Creating portable ZIP archive for Linux..." -ForegroundColor Cyan
+            $zipDir = Join-Path $PSScriptRoot "artifacts\zip"
+            New-Item -ItemType Directory -Path $zipDir -Force | Out-Null
+            $zipPath = Join-Path $zipDir "OpenDSC.Resources.Linux.Portable-$version.zip"
+            Compress-Archive -Path "$portableLinuxDir\*" -DestinationPath $zipPath -Force
+            Write-Host "Self-contained portable version for Linux built successfully!" -ForegroundColor Green
+            Write-Host "Output location: $portableLinuxDir" -ForegroundColor Green
+            Write-Host "ZIP archive: $zipPath" -ForegroundColor Green
         }
     }
 
