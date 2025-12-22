@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenDsc.Resource.CommandLine" />
+    <PackageReference Include="JsonSchema.Net.Generation" />
+  </ItemGroup>
+
+</Project>

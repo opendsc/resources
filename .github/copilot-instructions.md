@@ -2,42 +2,66 @@
 
 ## Project Overview
 
-This repository contains DSC v3 (Desired State Configuration) resources for Windows management. Each resource is a standalone C# executable that implements a standard DSC interface through the `OpenDsc.Resource.CommandLine` library.
+This repository contains Microsoft DSC (Desired State Configuration) resources for Windows and cross-platform management. The project uses a **multi-resource executable architecture** where all resources are bundled into platform-specific executables (`OpenDsc.Resource.CommandLine.Windows.exe` and `OpenDsc.Resource.CommandLine.Linux`) that implement the standard DSC interface through the `OpenDsc.Resource.CommandLine` library.
 
-**Key Resources:**
-- `windows-environment/` - Environment variable management
-- `windows-service/` - Windows service control
-- `windows-shortcut/` - Shortcut (.lnk) file management
-- `windows-group/` - Local Windows group management
-- `windows-user/` - Local Windows user accounts
-- `windows-optional-feature/` - Windows optional features via DISM
-- `windows-filesystem-acl/` - File system ACL management
-- `filesystem-file/` - Cross-platform file management
-- `filesystem-directory/` - Cross-platform directory management
-- `xml-element/` - XML element manipulation
+**Available Resources:**
+
+Windows Resources (in `src/OpenDsc.Resource.Windows/`):
+- `Environment/` - Environment variable management (`OpenDsc.Windows/Environment`)
+- `Service/` - Windows service control (`OpenDsc.Windows/Service`)
+- `Shortcut/` - Shortcut (.lnk) file management (`OpenDsc.Windows/Shortcut`)
+- `Group/` - Local Windows group management (`OpenDsc.Windows/Group`)
+- `User/` - Local Windows user accounts (`OpenDsc.Windows/User`)
+- `OptionalFeature/` - Windows optional features via DISM (`OpenDsc.Windows/OptionalFeature`)
+- `FileSystem/Acl/` - File system ACL management (`OpenDsc.Windows.FileSystem/AccessControlList`)
+
+Cross-Platform Resources (in `src/OpenDsc.Resource.FileSystem/` and `src/OpenDsc.Resource.Xml/`):
+- `File/` - Cross-platform file management (`OpenDsc.FileSystem/File`)
+- `Directory/` - Cross-platform directory management (`OpenDsc.FileSystem/Directory`)
+- `Element/` - XML element manipulation (`OpenDsc.Xml/Element`)
 
 **Resource Naming Convention:**
 - Windows-specific: `OpenDsc.Windows/<Name>` (namespace: `OpenDsc.Resource.Windows.<Name>`)
 - Cross-platform: `OpenDsc.<Area>/<Name>` (namespace: `OpenDsc.Resource.<Area>.<Name>`)
 - Specialized: `OpenDsc.Xml/<Name>` (namespace: `OpenDsc.Resource.Xml.<Name>`)
+- **With sub-area**: `OpenDsc.Windows.<SubArea>/<Name>` (namespace: `OpenDsc.Resource.Windows.<SubArea>.<Name>`)
+  - Example: `OpenDsc.Windows.FileSystem/AccessControlList` → folder `src/OpenDsc.Resource.Windows/FileSystem/Acl/` → namespace `OpenDsc.Resource.Windows.FileSystem.Acl`
 
 ## Architecture Pattern
 
-### Resource Structure (All resources follow this pattern)
+### Multi-Resource Executable Structure
 
-Each resource is a self-contained .NET 9.0 console application with these core files:
+The project uses a **consolidated executable approach** where multiple resources are bundled into platform-specific executables:
+
+**Platform Executables:**
+- `src/OpenDsc.Resource.CommandLine.Windows/` - Windows executable containing all Windows + cross-platform resources
+- `src/OpenDsc.Resource.CommandLine.Linux/` - Linux executable containing cross-platform resources only
+
+**Resource Implementation Structure:**
+
+Each resource is a folder within a shared project (e.g., `src/OpenDsc.Resource.Windows/Environment/`):
 
 ```
-<resource-name>/
-├── src/
-│   ├── Program.cs              # Entry point: builds command via CommandBuilder
-│   ├── Resource.cs             # Core logic with [DscResource] attribute
-│   ├── Schema.cs               # JSON schema model with validation attributes
-│   ├── SourceGenerationContext.cs  # AOT-friendly JSON serialization
-│   └── *.csproj                # Project configuration
-├── tests/
-│   └── *.Tests.ps1             # Pester tests
-└── build.ps1                   # Build script: dotnet publish + Invoke-Pester
+src/OpenDsc.Resource.Windows/
+├── OpenDsc.Resource.Windows.csproj    # Shared project for all Windows resources
+├── SourceGenerationContext.cs         # Shared JSON serialization context
+├── Environment/
+│   ├── Resource.cs                    # Core logic with [DscResource] attribute
+│   ├── Schema.cs                      # JSON schema model
+│   └── Scope.cs                       # Supporting types (if needed)
+├── Group/
+│   ├── Resource.cs
+│   └── Schema.cs
+└── ...other resources...
+
+src/OpenDsc.Resource.CommandLine.Windows/
+├── Program.cs                          # Entry point: registers all resources
+└── OpenDsc.Resource.CommandLine.Windows.csproj
+
+tests/
+├── Environment.Tests.ps1               # Integration tests per resource
+├── Group.Tests.ps1
+└── ...other tests...
 ```
 
 ### Critical Inheritance Pattern
@@ -45,27 +69,68 @@ Each resource is a self-contained .NET 9.0 console application with these core f
 All resources inherit from `DscResource<Schema>` and implement capability interfaces:
 
 ```csharp
+// Resource.cs in each resource folder (e.g., src/OpenDsc.Resource.Windows/Environment/Resource.cs)
+[DscResource("OpenDsc.Windows/Environment", "0.1.0", Description = "Manage Windows environment variables", Tags = ["windows", "environment"])]
+[ExitCode(0, Description = "Success")]
+[ExitCode(1, Exception = typeof(Exception), Description = "Error")]
 public sealed class Resource(JsonSerializerContext context)
     : DscResource<Schema>(context),
       IGettable<Schema>,      // Read current state (optional, but recommended)
       ISettable<Schema>,      // Apply desired state (optional, but recommended)
       IDeletable<Schema>,     // Remove resource (optional, but recommended)
       IExportable<Schema>     // Export all instances (optional)
+{
+    public override string GetSchema() { /* ... */ }
+    public Schema Get(Schema instance) { /* ... */ }
+    public SetResult<Schema>? Set(Schema instance) { /* ... */ }
+    public void Delete(Schema instance) { /* ... */ }
+    public IEnumerable<Schema> Export() { /* ... */ }
+}
 ```
 
-**Program.cs Entry Point:**
+**Platform Executable Entry Point (Program.cs):**
 
-All resources use this standard entry point pattern:
+The `Program.cs` in platform executables (Windows/Linux) registers all resources using `CommandBuilder`:
 
 ```csharp
+// src/OpenDsc.Resource.CommandLine.Windows/Program.cs
 using OpenDsc.Resource.CommandLine;
-using OpenDsc.Resource.Windows.Environment;  // Update namespace to match your resource
+using GroupNs = OpenDsc.Resource.Windows.Group;
+using EnvironmentNs = OpenDsc.Resource.Windows.Environment;
+using FileSystemAclNs = OpenDsc.Resource.Windows.FileSystem.Acl;  // Sub-area resource
+// ... other resource namespaces
 
-var resource = new Resource(SourceGenerationContext.Default);
+var groupResource = new GroupNs.Resource(OpenDsc.Resource.Windows.SourceGenerationContext.Default);
+var environmentResource = new EnvironmentNs.Resource(OpenDsc.Resource.Windows.SourceGenerationContext.Default);
+var fileSystemAclResource = new FileSystemAclNs.Resource(OpenDsc.Resource.Windows.SourceGenerationContext.Default);
+// ... instantiate other resources
+
 var command = new CommandBuilder()
-    .AddResource<Resource, Schema>(resource)
+    .AddResource<GroupNs.Resource, GroupNs.Schema>(groupResource)
+    .AddResource<EnvironmentNs.Resource, EnvironmentNs.Schema>(environmentResource)
+    .AddResource<FileSystemAclNs.Resource, FileSystemAclNs.Schema>(fileSystemAclResource)
+    // ... add other resources
     .Build();
+
 return command.Parse(args).Invoke();
+```
+
+**Shared SourceGenerationContext:**
+
+Resources within the same project share a `SourceGenerationContext.cs` at the project root:
+
+```csharp
+// src/OpenDsc.Resource.Windows/SourceGenerationContext.cs
+[JsonSourceGenerationOptions(
+    WriteIndented = false,
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    UseStringEnumConverter = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+[JsonSerializable(typeof(Group.Schema), TypeInfoPropertyName = "GroupSchema")]
+[JsonSerializable(typeof(User.Schema), TypeInfoPropertyName = "UserSchema")]
+[JsonSerializable(typeof(Environment.Schema), TypeInfoPropertyName = "EnvironmentSchema")]
+// ... other schemas
+public partial class SourceGenerationContext : JsonSerializerContext { }
 ```
 
 **GetSchema() Method:**
@@ -141,7 +206,7 @@ DSC defines several canonical properties that provide shared semantics across re
   - When `false`: Additive mode - only adds items from the list without removing others
   - Use in: Resources managing lists/collections (e.g., group members, installed features)
   - Mark with `[WriteOnly]` attribute since it's a control property, not state
-  - Example: `windows-group` resource uses `_purge` to control group membership behavior
+  - Example: `Group` resource uses `_purge` to control group membership behavior
 
 - **`_inDesiredState` (bool?)** - Read-only property indicating whether the instance is in desired state. Mandatory for resources that implement the `test` operation.
   - Use in: Resources implementing `ITestable<Schema>`
@@ -297,20 +362,43 @@ DSC automatically aggregates `_restartRequired` entries from all resources into 
 
 ## Build & Test Workflow
 
-### Building a Resource
+### Building the Project
 
 ```powershell
-# From resource directory (e.g., windows-environment/)
+# Build all resources (from repository root)
 .\build.ps1
 
-# Or manually:
-dotnet publish src/*.csproj -c Release
+# Build specific configuration
+.\build.ps1 -Configuration Debug
+
+# Build portable self-contained version (includes .NET runtime)
+.\build.ps1 -Portable
+
+# Build MSI installer
+.\build.ps1 -Msi
+
+# Skip tests during build
+.\build.ps1 -SkipTest
 ```
 
 **Build Process:**
-1. `dotnet publish` creates single-file executable
-2. MSBuild `RunAfterPublish` target generates `.dsc.resource.json` manifest via `<exe> manifest`
-3. Output: `src/bin/Release/net9.0/win-x64/publish/<resource-name>.exe`
+1. `dotnet publish` compiles platform-specific executable (`OpenDsc.Resource.CommandLine.Windows.exe` or `.Linux`)
+2. Build artifacts are placed in `artifacts/publish/`
+3. Portable builds create self-contained executables with embedded runtime in `artifacts/portable/`
+4. MSI builds create installer in `artifacts/msi/`
+
+**Output Structure:**
+```
+artifacts/
+├── publish/
+│   ├── OpenDsc.Resource.CommandLine.Windows.exe
+│   ├── OpenDsc.Resource.CommandLine.Windows.dsc.manifests.json
+│   └── ...dependencies
+├── portable/                    # Self-contained with .NET runtime
+│   └── OpenDsc.Resource.CommandLine.Windows.exe
+└── msi/
+    └── OpenDsc.Resource.CommandLine.Windows.msi
+```
 
 ### Testing with Pester
 
@@ -404,22 +492,23 @@ if (instance.Purge == true) { ... }
 
 ### Source Generation (Required for AOT)
 
-Every resource needs `SourceGenerationContext.cs`:
+Resources within the same project share a `SourceGenerationContext.cs` at the project root:
 
 ```csharp
+// src/OpenDsc.Resource.Windows/SourceGenerationContext.cs
 [JsonSourceGenerationOptions(
     WriteIndented = false,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     UseStringEnumConverter = true,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
-[JsonSerializable(typeof(IDscResource<Schema>))]
-[JsonSerializable(typeof(Schema))]
-[JsonSerializable(typeof(TestResult<Schema>))]
-[JsonSerializable(typeof(SetResult<Schema>))]
-internal partial class SourceGenerationContext : JsonSerializerContext { }
+[JsonSerializable(typeof(Group.Schema), TypeInfoPropertyName = "GroupSchema")]
+[JsonSerializable(typeof(User.Schema), TypeInfoPropertyName = "UserSchema")]
+[JsonSerializable(typeof(Environment.Schema), TypeInfoPropertyName = "EnvironmentSchema")]
+// ... all schemas in the project
+public partial class SourceGenerationContext : JsonSerializerContext { }
 ```
 
-Pass this context to the `Resource` constructor.
+Each resource constructor receives the shared context: `new Resource(OpenDsc.Resource.Windows.SourceGenerationContext.Default)`
 
 ### Error Handling with Exit Codes
 
@@ -444,7 +533,7 @@ All `.cs` files require MIT license header (IDE0073 warning):
 // terms of the MIT license.
 ```
 
-### COM Interop Pattern (windows-shortcut)
+### COM Interop Pattern (Shortcut)
 
 For COM interfaces, use P/Invoke declarations with manual RCW management:
 
@@ -497,7 +586,7 @@ public SetResult<Schema>? Set(Schema instance)
 
 ### Scope/Privilege Patterns
 
-Check scope in Get/Set/Delete for user vs. machine operations (see `windows-environment`):
+Check scope in Get/Set/Delete for user vs. machine operations (see [Environment](../src/OpenDsc.Resource.Windows/Environment/)):
 
 ```csharp
 var target = instance.Scope is Scope.Machine
@@ -509,45 +598,22 @@ Machine scope requires admin elevation.
 
 ## Creating a New Resource
 
-### Checklist
+### Adding a Resource to an Existing Project
 
-Use `windows-environment` as the template - it's the simplest, most complete example.
+Use [Environment/](../src/OpenDsc.Resource.Windows/Environment/) as the template - it's the simplest, most complete example.
 
-1. **Create directory structure using dotnet template:**
-   ```powershell
-   # Install the dsc-aot template (if not already installed)
-   dotnet new install dsc-aot
+1. **Create resource folder** in the appropriate project:
+   - Windows-only: `src/OpenDsc.Resource.Windows/<Name>/`
+   - Cross-platform: `src/OpenDsc.Resource.FileSystem/<Name>/` or `src/OpenDsc.Resource.Xml/<Name>/`
 
-   # Create new resource from template
-   dotnet new dsc-aot -n windows-<name> -o windows-<name>
-   ```
-
-   This creates:
-   ```
-   windows-<name>/
-   ├── src/
-   │   ├── Program.cs
-   │   ├── Resource.cs
-   │   ├── Schema.cs
-   │   ├── SourceGenerationContext.cs
-   │   └── *.csproj
-   ├── tests/
-   │   └── *.Tests.ps1
-   └── build.ps1
-   ```
-
-2. **Customize generated files:**
-   - `Program.cs` - Update resource name and namespace (minimal changes needed)
+2. **Create core files** in the resource folder:
    - `Resource.cs` - Core implementation with `[DscResource]` attribute
-   - `Schema.cs` - Property definitions with JSON Schema attributes and `[Nullable(false)]` on non-nullable properties
-   - `SourceGenerationContext.cs` - Update type references for your schema
-   - `*.csproj` - Update `AssemblyName`, set target framework, add platform-specific packages if needed
-     - Use `<TargetFramework>net9.0-windows</TargetFramework>` for resources using Windows-only APIs (e.g., `System.DirectoryServices.AccountManagement`, COM interop, Win32 APIs)
-     - Use `<TargetFramework>net9.0</TargetFramework>` for resources using only cross-platform APIs
+   - `Schema.cs` - Property definitions with JSON Schema attributes
+   - Supporting types (e.g., `Scope.cs`, enums) if needed
 
 3. **Implement Resource class:**
    - Inherit from `DscResource<Schema>` with context parameter
-   - Add `[DscResource("OpenDsc.Windows/<Name>")]` attribute
+   - Add `[DscResource("OpenDsc.Windows/<Name>", "0.1.0")]` attribute with version and metadata
    - Override `GetSchema()` method with standard implementation
    - Define `[ExitCode]` mappings for exceptions
    - Implement capability interfaces (all optional, but implement those that make sense):
@@ -559,56 +625,58 @@ Use `windows-environment` as the template - it's the simplest, most complete exa
 4. **Define Schema:**
    - Add `[Title]`, `[Description]`, `[AdditionalProperties(false)]`
    - Required key property with `[Required]` and `[Pattern]` validation
-   - Use `[Nullable(false)]` on properties where users should not submit `null` values
+   - Use `[Nullable(false)]` on nullable C# properties where you want to prevent `null` JSON values
    - Use `[JsonPropertyName("_propertyName")]` for DSC canonical properties
    - Add `[Default]` values where appropriate
    - All enums use PascalCase values
 
-5. **Create build.ps1:**
-   ```powershell
-   $csproj = Get-ChildItem $PSScriptRoot\src\*.csproj
-   dotnet publish $csproj
-   Invoke-Pester
+5. **Update SourceGenerationContext.cs** in the project root:
+   ```csharp
+   [JsonSerializable(typeof(YourResource.Schema), TypeInfoPropertyName = "YourResourceSchema")]
    ```
 
-6. **Write integration tests** (`tests/*.Tests.ps1`):
+6. **Register resource in Program.cs** of the platform executable:
+   ```csharp
+   // Add namespace alias
+   using YourResourceNs = OpenDsc.Resource.Windows.YourResource;
+
+   // Instantiate resource
+   var yourResource = new YourResourceNs.Resource(OpenDsc.Resource.Windows.SourceGenerationContext.Default);
+
+   // Add to CommandBuilder
+   .AddResource<YourResourceNs.Resource, YourResourceNs.Schema>(yourResource)
+   ```
+
+7. **Write integration tests** (`tests/YourResource.Tests.ps1`):
    - Discovery: `dsc resource list OpenDsc.Windows/<Name>`
    - Get operation: test existing and non-existent resources
    - Set operation: create and update
    - Delete operation: remove and verify
    - Export operation (if implemented)
+   - Use admin-required test pattern with `-Skip:(!$isAdmin)` for elevated operations
    - Always cleanup test resources in `AfterEach`/`AfterAll`
-
-7. **Add MSBuild manifest generation** to `.csproj`:
-   ```xml
-   <Target Name="RunAfterPublish" AfterTargets="Publish">
-     <PropertyGroup>
-       <OutputFileName>$(TargetName).dsc.resource.json</OutputFileName>
-     </PropertyGroup>
-     <Exec Command="$(PublishDir)$(TargetName).exe manifest &gt; $(PublishDir)$(OutputFileName)" />
-   </Target>
-   ```
 
 8. **Fix IDE problems:**
    - Check and resolve all IDE/VS Code diagnostics (warnings, errors, suggestions)
    - Remove unused variables, unnecessary using directives, and other code issues
+   - Ensure MIT license header is present in all `.cs` files
 
 9. **Verify:**
-   - File headers present in all `.cs` files (MIT license)
    - Build succeeds: `.\build.ps1`
-   - Tests pass: manifest generated, all Pester tests green
+   - Tests pass: all Pester tests green
    - Manual test: `dsc resource get -r OpenDsc.Windows/<Name> --input '{...}'`
 
 ## Key Files to Reference
 
-- **Template Resource:** `windows-environment/` (simplest, most complete implementation)
-- **Complex Resource:** `windows-optional-feature/` (uses SetReturn.State, metadata, and restart handling)
-- **Collection Management:** `windows-group/` (demonstrates _purge pattern)
-- **COM Interop:** `windows-shortcut/src/ShortcutHelper.cs` (P/Invoke patterns)
-- **Win32 API:** `windows-service/src/ServiceHelper.cs` (Win32 API wrappers)
-- **DISM API:** `windows-optional-feature/src/DismHelper.cs` (P/Invoke DISM interop)
-- **Test Examples:** `windows-environment/tests/*.Tests.ps1` (comprehensive integration tests)
-- **Editor Config:** `.editorconfig` (C# style rules, file headers)
+- **Template Resource:** [Environment/](../src/OpenDsc.Resource.Windows/Environment/) (simplest, most complete implementation)
+- **Complex Resource:** [OptionalFeature/](../src/OpenDsc.Resource.Windows/OptionalFeature/) (uses SetReturn.State, metadata, and restart handling)
+- **Collection Management:** [Group/](../src/OpenDsc.Resource.Windows/Group/) (demonstrates _purge pattern)
+- **COM Interop:** [Shortcut/](../src/OpenDsc.Resource.Windows/Shortcut/) (P/Invoke patterns for COM)
+- **Win32 API:** [Service/](../src/OpenDsc.Resource.Windows/Service/) (Win32 API wrappers)
+- **DISM API:** [OptionalFeature/](../src/OpenDsc.Resource.Windows/OptionalFeature/) (P/Invoke DISM interop)
+- **Test Examples:** [Environment.Tests.ps1](../tests/Environment.Tests.ps1) (comprehensive integration tests)
+- **Platform Entry Point:** [Program.cs](../src/OpenDsc.Resource.CommandLine.Windows/Program.cs) (resource registration)
+- **Editor Config:** [.editorconfig](../.editorconfig) (C# style rules, file headers)
 
 ## Package Dependencies
 
