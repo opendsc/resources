@@ -73,5 +73,9 @@ jobs:
           name: linux-artifacts
           path: artifacts
 
+      - name: Set Execute Permissions
+        if: matrix.os != 'windows-latest'
+        run: chmod +x artifacts/publish/OpenDsc.Resource.CommandLine.Linux
+
       - name: Run Tests
         run: .\build.ps1 -SkipBuild -InstallDsc -GitHubToken ${{ secrets.GITHUB_TOKEN }}
