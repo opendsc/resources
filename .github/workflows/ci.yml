@@ -59,18 +59,10 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Download Windows Artifacts
-        if: matrix.os == 'windows-latest'
+      - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: windows-artifacts
-          path: artifacts
-
-      - name: Download Linux Artifacts
-        if: matrix.os != 'windows-latest'
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-artifacts
+          name: ${{ matrix.os == 'windows-latest' && 'windows-artifacts' || 'linux-artifacts' }}
           path: artifacts
 
       - name: Set Execute Permissions
