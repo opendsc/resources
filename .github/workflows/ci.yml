@@ -14,7 +14,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -25,25 +28,29 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Build and Publish
-        run: .\build.ps1 -Configuration Release -SkipTest
+        run: .\build.ps1 -Configuration Release -SkipTest -Portable ${{ matrix.os == 'windows-latest' && '-Msi' || '' }}
 
       - name: Upload Windows Artifacts
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: windows-executable
-          path: src/OpenDsc.Resource.Windows/bin/Release/net9.0-windows/win-x64/publish/*
+          path: |
+            artifacts/portable/*
+            artifacts/msi/*
 
       - name: Upload Linux Artifacts
+        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: linux-executable
-          path: src/OpenDsc.Resource.Linux/bin/Release/net9.0/linux-x64/publish/*
+          path: artifacts/portable/*
 
   test:
     needs: build
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repository
@@ -70,35 +77,3 @@ jobs:
 
       - name: Run Tests
         run: .\build.ps1 -SkipBuild -InstallDsc -GitHubToken ${{ secrets.GITHUB_TOKEN }}
-
-  publish:
-    needs: test
-    if: github.event_name == 'release' && github.event.action == 'published'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Windows Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-executable
-          path: ./windows-artifacts
-
-      - name: Download Linux Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-executable
-          path: ./linux-artifacts
-
-      - name: Create Release Archives
-        run: |
-          cd windows-artifacts
-          zip -r ../OpenDsc.Resource.Windows-${{ github.event.release.tag_name }}-win-x64.zip .
-          cd ../linux-artifacts
-          tar -czf ../OpenDsc.Resource.Linux-${{ github.event.release.tag_name }}-linux-x64.tar.gz .
-          cd ..
-
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            OpenDsc.Resource.Windows-${{ github.event.release.tag_name }}-win-x64.zip
-            OpenDsc.Resource.Linux-${{ github.event.release.tag_name }}-linux-x64.tar.gz
