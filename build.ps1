@@ -221,13 +221,5 @@ if (Test-Path $publishDir) {
 
 Write-Host "Running tests..." -ForegroundColor Cyan
 
-$tag = if ($IsWindows) {
-    'Windows'
-} elseif ($IsLinux) {
-    'Linux'
-} elseif ($IsMacOS) {
-    'MacOS'
-}
-
 $testsPath = Join-Path $PSScriptRoot 'tests'
-Invoke-Pester -Path $testsPath -TagFilter $tag
+Invoke-Pester -Path $testsPath

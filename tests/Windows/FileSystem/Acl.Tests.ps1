@@ -1,11 +1,11 @@
-$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
 Describe 'Windows File System ACL Resource' -Tag 'Windows' -Skip:(!$IsWindows) {
     BeforeAll {
         $publishDir = Join-Path $PSScriptRoot "..\..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
+
+        $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
         $script:testDir = Join-Path $env:TEMP "DscAclTest_$(Get-Random)"
         $script:testFile = Join-Path $script:testDir "testfile.txt"

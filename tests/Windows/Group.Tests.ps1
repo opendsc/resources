@@ -1,11 +1,11 @@
-$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
 Describe 'Windows Group Resource' -Tag 'Windows' -Skip:(!$IsWindows) {
     BeforeAll {
         $publishDir = Join-Path $PSScriptRoot "..\..\artifacts\publish"
         if (Test-Path $publishDir) {
             $env:DSC_RESOURCE_PATH = $publishDir
         }
+
+        $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
         $script:testGroup1 = "DscTestGroup_$(Get-Random -Maximum 9999)"
         $script:testGroup2 = "DscTestGroup_$(Get-Random -Maximum 9999)"
