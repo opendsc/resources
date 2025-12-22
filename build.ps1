@@ -133,7 +133,7 @@ if (-not $SkipBuild) {
 
         if ($Portable) {
             Write-Host "Building self-contained portable version for Linux..." -ForegroundColor Cyan
-            $portableLinuxDir = Join-Path $PSScriptRoot "artifacts\portable-linux"
+            $portableLinuxDir = Join-Path $PSScriptRoot "artifacts\portable"
             New-Item -ItemType Directory -Path $portableLinuxDir -Force | Out-Null
             dotnet publish $linuxProj `
                 --configuration $Configuration `
