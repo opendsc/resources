@@ -35,14 +35,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
-          path: artifacts/
+          path: artifacts
 
       - name: Upload Linux Artifacts
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
-          path: artifacts/
+          path: artifacts
 
   test:
     needs: build
@@ -64,14 +64,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: windows-artifacts
-          path: ./
+          path: artifacts
 
       - name: Download Linux Artifacts
         if: matrix.os != 'windows-latest'
         uses: actions/download-artifact@v4
         with:
           name: linux-artifacts
-          path: ./
+          path: artifacts
 
       - name: Run Tests
         run: .\build.ps1 -SkipBuild -InstallDsc -GitHubToken ${{ secrets.GITHUB_TOKEN }}
