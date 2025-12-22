@@ -178,13 +178,13 @@ if ($InstallDsc) {
         Write-Host "Latest DSC prerelease version: $version"
 
         if ($IsWindows) {
-            $platform = "x86_64-pc-windows-msvc"
+            $platform = "win-x64"
             $extension = "zip"
         } elseif ($IsLinux) {
-            $platform = "x86_64-unknown-linux-gnu"
+            $platform = "linux-x64"
             $extension = "tar.gz"
         } elseif ($IsMacOS) {
-            $platform = "aarch64-apple-darwin"
+            $platform = "osx-arm64"
             $extension = "tar.gz"
         }
 
