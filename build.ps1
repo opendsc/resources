@@ -181,7 +181,7 @@ if ($InstallDsc) {
             $platform = "win-x64"
             $extension = "zip"
         } elseif ($IsLinux) {
-            $platform = "linux-x64"
+            $platform = "x86_64-linux"
             $extension = "tar.gz"
         } elseif ($IsMacOS) {
             $platform = "osx-arm64"
