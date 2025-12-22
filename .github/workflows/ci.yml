@@ -34,20 +34,15 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: windows-executable
-          path: |
-            artifacts/publish/*
-            artifacts/portable/*
-            artifacts/msi/*
+          name: windows-artifacts
+          path: artifacts/
 
       - name: Upload Linux Artifacts
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: linux-executable
-          path: |
-            artifacts/publish/*
-            artifacts/portable/*
+          name: linux-artifacts
+          path: artifacts/
 
   test:
     needs: build
@@ -68,15 +63,15 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: actions/download-artifact@v4
         with:
-          name: windows-executable
-          path: artifacts/publish/
+          name: windows-artifacts
+          path: ./
 
       - name: Download Linux Artifacts
         if: matrix.os != 'windows-latest'
         uses: actions/download-artifact@v4
         with:
-          name: linux-executable
-          path: artifacts/publish/
+          name: linux-artifacts
+          path: ./
 
       - name: Run Tests
         run: .\build.ps1 -SkipBuild -InstallDsc -GitHubToken ${{ secrets.GITHUB_TOKEN }}
