@@ -36,6 +36,7 @@ jobs:
         with:
           name: windows-executable
           path: |
+            artifacts/publish/*
             artifacts/portable/*
             artifacts/msi/*
 
@@ -44,7 +45,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux-executable
-          path: artifacts/portable/*
+          path: |
+            artifacts/publish/*
+            artifacts/portable/*
 
   test:
     needs: build
@@ -66,14 +69,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: windows-executable
-          path: src/OpenDsc.Resource.Windows/bin/Release/net9.0-windows/win-x64/publish/
+          path: artifacts/publish/
 
       - name: Download Linux Artifacts
         if: matrix.os != 'windows-latest'
         uses: actions/download-artifact@v4
         with:
           name: linux-executable
-          path: src/OpenDsc.Resource.Linux/bin/Release/net9.0/linux-x64/publish/
+          path: artifacts/publish/
 
       - name: Run Tests
         run: .\build.ps1 -SkipBuild -InstallDsc -GitHubToken ${{ secrets.GITHUB_TOKEN }}
