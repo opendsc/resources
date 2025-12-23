@@ -1,5 +1,9 @@
 # OpenDSC Resources
 
+> [!IMPORTANT]
+> This repository has been moved to
+> [opendsc/opendsc](https://github.com/opendsc/opendsc).
+
 A collection of Microsoft DSC (Desired State Configuration) resources for
 managing Windows and cross-platform systems.
 
